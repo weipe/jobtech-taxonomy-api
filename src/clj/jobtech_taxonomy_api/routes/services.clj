@@ -4,7 +4,9 @@
             [schema.core :as s]
             [compojure.api.meta :refer [restructure-param]]
             [buddy.auth.accessrules :refer [restrict]]
-            [buddy.auth :refer [authenticated?]]))
+            [buddy.auth :refer [authenticated?]]
+            [jobtech-taxonomy-api.db.core :refer [find-concept-by-preferred-term]]
+            ))
 
 (defn access-error [_ _]
   (unauthorized {:error "unauthorized"}))
@@ -33,8 +35,16 @@
          :auth-rules authenticated?
          :current-user user
          (ok {:user user}))
+
     (context "/taxonomy/api" []
       :tags ["thingie"]
+
+      (GET "/term" []
+        :return       String
+        :query-params [term :- String]
+        :summary      "get term"
+        (ok (str (find-concept-by-preferred-term term))))
+
 
       (GET "/plus" []
         :return       Long

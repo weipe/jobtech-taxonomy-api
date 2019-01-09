@@ -1,1 +1,7 @@
-{}
+{:datomic-name "taxonomy_v13"
+ :datomic-cfg {:server-type :peer-server
+               :access-key  "myaccesskey"
+               :secret      "mysecret"
+               :endpoint    "localhost:8998"}
+ :database-url "datomic:free://localhost:4334/taxonomy_v13"
+ }
