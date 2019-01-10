@@ -6,7 +6,9 @@
   :dependencies [[buddy "2.0.0"]
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
-                 [com.datomic/datomic-free "0.9.5697" :exclusions [org.slf4j/log4j-over-slf4j org.slf4j/slf4j-nop com.google.guava/guava]]
+
+                 [com.datomic/client-pro "0.8.28" ]
+
                  [com.google.guava/guava "25.1-jre"]
                  [compojure "1.6.1"]
                  [cprop "0.1.13"]
@@ -34,7 +36,7 @@
                  [selmer "1.12.5"]]
 
   :min-lein-version "2.0.0"
-  
+
   :source-paths ["src/clj"]
   :test-paths ["test/clj"]
   :resource-paths ["resources"]
@@ -61,7 +63,7 @@
                                  [ring/ring-devel "1.7.1"]
                                  [ring/ring-mock "0.3.2"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.23.0"]]
-                  
+
                   :source-paths ["env/dev/clj"]
                   :resource-paths ["env/dev/resources"]
                   :repl-options {:init-ns user}
