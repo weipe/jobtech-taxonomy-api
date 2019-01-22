@@ -1,11 +1,15 @@
 (ns jobtech-taxonomy-api.routes.services
   (:require [ring.util.http-response :refer :all]
+            [ring.middleware.json :refer [wrap-json-response]]
             [compojure.api.sweet :refer :all]
             [schema.core :as s]
             [compojure.api.meta :refer [restructure-param]]
             [buddy.auth.accessrules :refer [restrict]]
             [buddy.auth :refer [authenticated?]]
-            [jobtech-taxonomy-api.db.core :refer [find-concept-by-preferred-term]]
+            [clojure.data.json :as json]
+            [clj-time [format :as f]]
+            [clj-time.coerce :as c]
+            [jobtech-taxonomy-api.db.core :refer [find-concept-by-preferred-term show-term-history show-term-history-since]]
             ))
 
 (defn access-error [_ _]
@@ -45,33 +49,16 @@
         :summary      "get term"
         (ok (str (find-concept-by-preferred-term term))))
 
+      (GET "/full-history" []
+           :query-params []
+           :summary      "Show the complete history."
+           {:body (show-term-history)})
 
-      (GET "/plus" []
-        :return       Long
-        :query-params [x :- Long, {y :- Long 1}]
-        :summary      "x+y with query-parameters. y defaults to 1."
-        (ok (+ x y)))
+      ;; TODO: debug, seems to be date casting problems or something, try
+      ;;    (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") "2017-10-10")))
+      ;;(GET "/history-since" []
+      ;;     :query-params [date-time :- String]
+      ;;     :summary      "Show the history since the given date. Use the format '2017-06-09'."
+      ;;     {:body (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") date-time)))})
 
-      (POST "/minus" []
-        :return      Long
-        :body-params [x :- Long, y :- Long]
-        :summary     "x-y with body-parameters."
-        (ok (- x y)))
-
-      (GET "/times/:x/:y" []
-        :return      Long
-        :path-params [x :- Long, y :- Long]
-        :summary     "x*y with path-parameters"
-        (ok (* x y)))
-
-      (POST "/divide" []
-        :return      Double
-        :form-params [x :- Long, y :- Long]
-        :summary     "x/y with form-parameters"
-        (ok (/ x y)))
-
-      (GET "/power" []
-        :return      Long
-        :header-params [x :- Long, y :- Long]
-        :summary     "x^y with header-parameters"
-        (ok (long (Math/pow x y)))))))
+      )))

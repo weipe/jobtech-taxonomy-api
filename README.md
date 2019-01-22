@@ -26,6 +26,10 @@ To start the HTTP server and any other components such as databases, run the sta
 
     (start)
 
+or with a port number:
+
+    (start-app ["-p" "4444"])
+
 Run the following command to start the HTTP server:
 
     (mount/start #'jobtech-taxonomy-api.core/http-server)
