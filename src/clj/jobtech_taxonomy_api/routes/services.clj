@@ -56,9 +56,9 @@
 
       ;; TODO: debug, seems to be date casting problems or something, try
       ;;    (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") "2017-10-10")))
-      ;;(GET "/history-since" []
-      ;;     :query-params [date-time :- String]
-      ;;     :summary      "Show the history since the given date. Use the format '2017-06-09'."
-      ;;     {:body (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") date-time)))})
+      (GET "/history-since" []
+           :query-params [date-time :- String]
+           :summary      "Show the history since the given date. Use the format '2017-06-09'."
+           {:body (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") date-time)))})
 
       )))
