@@ -42,4 +42,49 @@
   (d/q find-concept-by-preferred-term-query (get-db) term)
   )
 
+(def show-term-history-query
+  '[:find ?e ?aname ?v ?tx ?added
+    :where
+    [?e ?a ?v ?tx ?added]
+    [?a :db/ident ?aname]])
+
+
+(defn ^:private format-result [result-list]
+  (->> result-list
+       (sort-by first)
+       (partition-by #(let [[entity col value tx is-added ] %] entity)) ; group by entity for better readability
+       ;; The rest is for placing the result vectors into neat,
+       ;; self-explanatory hashmaps - suitable for jsonifying later
+       (map (fn [entity-group]
+              (map (fn [entity]
+                     (let [[ent col value tx is-added ] entity]
+                       { :entity ent :col col :value value :tx tx :op (if is-added 'add 'retract ) }))
+                   entity-group)))))
+
+
+(defn ^:private show-term-history-back [q db]
+  (->>
+   (d/q q db)
+   (format-result)))
+
+(defn show-term-history []
+  (show-term-history-back show-term-history-query (d/history (get-db))))
+
+(def show-term-history-since-query
+  '[:find ?e ?aname ?v ?tx ?added
+    :in $ ?since
+    :where
+    [?e  ?a ?v ?tx ?added]
+    [?a  :db/ident ?aname]
+    [?tx :db/txInstant ?created-at]
+    [(< ?since ?created-at)]])
+
+(defn show-term-history-since [date-time]
+  (->>
+   (d/q show-term-history-since-query
+       (get-db)
+       date-time)
+   (format-result)))
+
+
 ;; (d/q find-concept-by-preferred-term-query (get-db) "Ga")

@@ -6,9 +6,9 @@
   :dependencies [[buddy "2.0.0"]
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
-
+                 [org.clojure/data.json "0.2.6"]
                  [com.datomic/client-pro "0.8.28" ]
-
+                 [clj-time "0.15.0"]
                  [com.google.guava/guava "25.1-jre"]
                  [compojure "1.6.1"]
                  [cprop "0.1.13"]
@@ -33,6 +33,7 @@
                  [ring-webjars "0.2.0"]
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
+                 [ring/ring-json "0.4.0"]
                  [selmer "1.12.5"]]
 
   :min-lein-version "2.0.0"
