@@ -6,5 +6,5 @@
                :system "dev-jobtech-taxonomy-db"
                ;;:creds-profile "<your_aws_profile_if_not_using_the_default>"
                :endpoint "http://10.20.2.123:8998/"
-               :proxy-port 8182}
+               }
  }
