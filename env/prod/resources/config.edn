@@ -5,6 +5,7 @@
                :region "eu-west-1" ;; e.g. us-east-1
                :system "dev-jobtech-taxonomy-db"
                ;;:creds-profile "<your_aws_profile_if_not_using_the_default>"
-               :endpoint "http://prod-jobtech-taxonomy-db.eu-west-1.datomic.net:8998/"
+               :endpoint "http://vpce-svc-0165b5ad05eed0fac.eu-west-1.vpce.amazonaws.com
+:8998/"
                }
  }
