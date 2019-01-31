@@ -1,6 +1,10 @@
 {:prod true
-
  :port 3000
-
-
+ :datomic-name "taxonomy_v13"
+ :datomic-cfg {:server-type :ion
+               :region "eu-west-1" ;; e.g. us-east-1
+               :system "dev-jobtech-taxonomy-db"
+               ;;:creds-profile "<your_aws_profile_if_not_using_the_default>"
+               :endpoint "http://10.20.2.123:8998/"
+               :proxy-port 8182}
  }
