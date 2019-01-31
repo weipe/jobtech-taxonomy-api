@@ -3,7 +3,7 @@
  :datomic-name "taxonomy_v13"
  :datomic-cfg {:server-type :ion
                :region "eu-west-1" ;; e.g. us-east-1
-               :system "dev-jobtech-taxonomy-db"
+               :system "prod-jobtech-taxonomy-db"
                ;;:creds-profile "<your_aws_profile_if_not_using_the_default>"
                :endpoint "http://vpce-09c8759d3843135bd-uxif5lbh.vpce-svc-0165b5ad05eed0fac.eu-west-1.vpce.amazonaws.com:8998/"
                }
