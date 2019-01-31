@@ -1,4 +1,4 @@
-FROM clojure:openjdk-8-lein as builder
+FROM clojure:openjdk-8-lein # as builder
 
 COPY . /
 
