@@ -9,8 +9,7 @@
             [clojure.data.json :as json]
             [clj-time [format :as f]]
             [clj-time.coerce :as c]
-            [jobtech-taxonomy-api.db.core :refer [find-concept-by-preferred-term show-term-history show-term-history-since]]
-            ))
+            [jobtech-taxonomy-api.db.core :refer :all]))
 
 (defn access-error [_ _]
   (unauthorized {:error "unauthorized"}))
@@ -29,36 +28,52 @@
 
 (def service-routes
   (api
-    {:swagger {:ui "/taxonomy/swagger-ui"
-               :spec "/taxonomy/swagger.json"
-               :data {:info {:version "1.0.0"
-                             :title "Sample API"
-                             :description "Sample Services"}}}}
+   {:swagger {:ui "/taxonomy/swagger-ui"
+              :spec "/taxonomy/swagger.json"
+              :data {:info {:version "1.0.0"
+                            :title "Sample API"
+                            :description "Sample Services"}}}}
 
-    (GET "/authenticated" []
-         :auth-rules authenticated?
-         :current-user user
-         (ok {:user user}))
+   (GET "/authenticated" []
+     :auth-rules authenticated?
+     :current-user user
+     (ok {:user user}))
 
-    (context "/taxonomy/api" []
-      :tags ["thingie"]
+   (context "/taxonomy/public-api" []
+     :tags ["public"]
 
-      (GET "/term" []
-        :return       String
-        :query-params [term :- String]
-        :summary      "get term"
-        (ok (str (find-concept-by-preferred-term term))))
+     (GET "/term" []
+       :return       String
+       :query-params [term :- String]
+       :summary      "get term"
+       (ok (str (find-concept-by-preferred-term term))))
 
-      (GET "/full-history" []
-           :query-params []
-           :summary      "Show the complete history."
-           {:body (show-term-history)})
+     (GET "/full-history" []
+       :query-params []
+       :summary      "Show the complete history."
+       {:body (show-term-history)})
 
-      ;; TODO: debug, seems to be date casting problems or something, try
-      ;;    (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") "2017-10-10")))
-      (GET "/history-since" []
-           :query-params [date-time :- String]
-           :summary      "Show the history since the given date. Use the format '2017-06-09'."
-           {:body (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd") date-time)))})
+     (GET "/history-since" []
+       :query-params [date-time :- String]
+       :summary      "Show the history since the given date. Use the format '2017-06-09 14:30:01'."
+       {:body (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd hh:mm:ss") date-time)))}))
 
-      )))
+   (context "/taxonomy/private-api" []
+     :tags ["private"]
+
+            ;; GET /concept/types -- returnerar en lista över alla taxonomityper
+            ;; GET /concept/all/<taxonomityp>
+            ;; DELETE /concept/<id>  (obs retract)
+            ;; POST /concept/is-deprecated -- skicka in IDn, returnera vilka av dessa som är deprecated:
+            ;;                                { { id:<id>, referTo <new-id> }, ... }
+            ;; POST /concept -- skapa nytt koncept. Skicka in:
+            ;;                    preferredTerm
+            ;;                    description
+            ;;                    typ
+            ;;                    alternativeTerms (optional - kolla om/hur det görs)
+
+            ;; GET /concept/<id>
+     (GET "/concept"    []
+       :query-params [id :- String]
+       :summary      "Get a concept by ID."
+       {:body (find-concept-by-id id)}))))
