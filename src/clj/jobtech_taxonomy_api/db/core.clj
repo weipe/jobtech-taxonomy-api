@@ -40,6 +40,19 @@
 (defn find-concept-by-id [id]
   (d/q find-concept-by-id-query (get-db) id))
 
+(def get-concepts-for-type-query
+  '[:find (pull ?c
+                [:concept/id
+                 :concept/description
+                 :concept/category
+                 {:concept/preferred-term [:term/base-form]}
+                 {:concept/referring-terms [:term/base-form]}])
+    :in $ ?type
+    :where [?c :concept/category ?type]])
+
+(defn get-concepts-for-type [type]
+  (d/q get-concepts-for-type-query (get-db) type))
+
 (def get-all-taxonomy-types-query
   ;;'[:find ?type :where [?e ?a ?v ?tx] [?a :concept/category ?type]])
   '[:find ?v :where [_ :concept/category ?v]])
@@ -110,7 +123,8 @@
     :start (get-conn))
 
   (let [some-terms        [{:term/base-form "Kontaktmannaskap"}
-                           {:term/base-form "Fribrottare"}]
+                           {:term/base-form "Fribrottare"}
+                           {:term/base-form "Begravningsentreprenör"}]
 
         some-concepts     [{:concept/id "MZ6wMoAfyP"
                             :concept/description "grotz"
@@ -121,10 +135,15 @@
                             :concept/description "Fribrottare"
                             :concept/category :occupation
                             :concept/preferred-term [:term/base-form "Fribrottare"]
-                            :concept/alternative-terms #{[:term/base-form "Fribrottare"]}}]]
+                            :concept/alternative-terms #{[:term/base-form "Fribrottare"]}}
+                           {:concept/id "ZZZZZZZZZZZ"
+                            :concept/description "Begravningsentreprenör"
+                            :concept/category :occupation
+                            :concept/preferred-term [:term/base-form "Begravningsentreprenör"]
+                            :concept/alternative-terms #{[:term/base-form "Begravningsentreprenör"]}}]]
     (d/transact (get-conn) {:tx-data (vec (concat some-terms))})
     (d/transact (get-conn) {:tx-data (vec (concat some-concepts))}))
 
   (get-all-taxonomy-types)
-  )
+  (get-concepts-for-type :occupation))
 ;; (stupid-debug)
