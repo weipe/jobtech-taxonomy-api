@@ -12,9 +12,15 @@ You will need [Leiningen][1] 2.0 or above installed.
 
 ## Running
 
-To start a web server for the application, run (for example, on port 4444):
+To start a web server for the application, run (for example, on port 4444)
 
-    lein run -p 4444
+    lein with-profile <profile> run -p 4444
+
+where profile is either
+    dev   -- points to AWS Datomic
+    local -- points to localhost Datomic
+    prod  -- TODO
+    test  -- TODO
 
 Then open the following URL in a web browser:
 

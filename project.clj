@@ -7,7 +7,8 @@
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/data.json "0.2.6"]
-                 [com.datomic/client-cloud "0.8.71"]
+                 [com.datomic/client-cloud "0.8.71"] ; for env/dev/
+                 [com.datomic/client-pro "0.8.28" ]  ; for env/local/
                  [clj-time "0.15.0"]
                  [com.google.guava/guava "25.1-jre"]
                  [compojure "1.6.1"]
@@ -55,9 +56,10 @@
              :resource-paths ["env/prod/resources"]}
 
    :dev           [:project/dev :profiles/dev]
+   :local         [:project/local :profiles/local]
    :test          [:project/dev :project/test :profiles/test]
 
-   :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"]
+   :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
                                  [pjstadig/humane-test-output "0.9.0"]
                                  [prone "1.6.1"]
@@ -70,7 +72,19 @@
                   :repl-options {:init-ns user}
                   :injections [(require 'pjstadig.humane-test-output)
                                (pjstadig.humane-test-output/activate!)]}
+   :project/local {:dependencies [[expound "0.7.2"]
+                                  [pjstadig/humane-test-output "0.9.0"]
+                                  [prone "1.6.1"]
+                                  [ring/ring-devel "1.7.1"]
+                                  [ring/ring-mock "0.3.2"]]
+                   :plugins      [[com.jakemccrary/lein-test-refresh "0.23.0"]]
+                   :source-paths ["env/local/clj"]
+                   :resource-paths ["env/local/resources"]
+                   :injections [(require 'pjstadig.humane-test-output)
+                                (pjstadig.humane-test-output/activate!)]
+                   :repl-options {:init-ns user}}
    :project/test {:jvm-opts ["-Dconf=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
    :profiles/dev {}
+   :profiles/local {}
    :profiles/test {}})
