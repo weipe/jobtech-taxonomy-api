@@ -1,4 +1,4 @@
-{:datomic-name "taxonomy_local"
+{:datomic-name "taxonomy_v13"
  :datomic-cfg {:server-type :peer-server
                :access-key  "myaccesskey"
                :secret      "mysecret"
