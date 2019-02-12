@@ -61,29 +61,35 @@
    (context "/taxonomy/private-api" []
      :tags ["private"]
 
-            ;; DELETE /concept/<id>  (obs retract)
-            ;; POST /concept/is-deprecated -- skicka in IDn, returnera vilka av dessa som är deprecated:
-            ;;                                { { id:<id>, referTo <new-id> }, ... }
-            ;; POST /concept -- skapa nytt koncept. Skicka in:
-            ;;                    preferredTerm
-            ;;                    description
-            ;;                    typ
-            ;;                    alternativeTerms (optional - kolla om/hur det görs)
+     ;; POST /concept/is-deprecated -- skicka in IDn, returnera vilka av dessa som är deprecated:
+     ;;                                { { id:<id>, referTo <new-id> }, ... }
 
-            ;; GET /concept
      (GET "/concept"    []
        :query-params [id :- String]
-       :summary      "Get a concept by ID."
+       :summary      "Read a concept by ID."
        {:body (find-concept-by-id id)})
 
-            ;; GET /concept/types -- returnerar en lista över alla taxonomityper
      (GET "/concept/types"    []
        :query-params []
-       :summary      "Get a list of all taxonomy types."
+       :summary      "Read a list of all taxonomy types."
        {:body (get-all-taxonomy-types)})
 
-            ;; GET /concept/all
      (GET "/concept/all"    []
        :query-params [type :- String]
-       :summary      "Get all concepts of the given type."
-       {:body (get-concepts-for-type type)}))))
+       :summary      "Read all concepts of the given type."
+       {:body (get-concepts-for-type type)})
+
+     (DELETE "/concept"    []
+       :query-params [id :- String]
+       :summary      "Retract the concept with the given ID."
+       {:body (retract-concept id)})
+
+     ;; alternativeTerms (optional - kolla om/hur det görs)
+     (POST "/concept"    []
+       :query-params [type :- String
+                      description :- String
+                      preferredTerm :- String]
+       :summary      "Assert a new concept."
+       {:body (assert-concept type description preferredTerm)})
+
+     )))
