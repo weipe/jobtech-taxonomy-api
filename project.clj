@@ -46,8 +46,8 @@
   :main ^:skip-aot jobtech-taxonomy-api.core
 
   :plugins [[lein-immutant "2.1.0"]
-            [lein-kibit "0.1.2"]]
-
+            [lein-kibit "0.1.2"]
+            [lein-cljfmt "0.6.3"]]
   :profiles
   {:uberjar {:omit-source true
              :aot :all
