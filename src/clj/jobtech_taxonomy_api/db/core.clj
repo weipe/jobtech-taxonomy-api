@@ -40,6 +40,14 @@
 (defn find-concept-by-id [id]
   (d/q find-concept-by-id-query (get-db) id))
 
+(def get-all-taxonomy-types-query
+  ;;'[:find ?type :where [?e ?a ?v ?tx] [?a :concept/category ?type]])
+  '[:find ?v :where [_ :concept/category ?v]])
+
+(defn get-all-taxonomy-types "" []
+  (->> (d/q get-all-taxonomy-types-query (get-db))
+       (sort-by first)))
+
 (def show-term-history-query
   '[:find ?e ?aname ?v ?tx ?added
     :where
@@ -81,3 +89,42 @@
         (get-db)
         date-time)
    (format-result)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn stupid-debug
+  "The env/dev/resources/config.edn is not read when REPLing here, so
+  we just make an ugly hack to be able to get on."
+  []
+
+  (defn get-client [] (d/client {:server-type :peer-server
+                                 :access-key  "myaccesskey"
+                                 :secret      "mysecret"
+                                 :endpoint    "localhost:8998"}))
+
+  (defn get-conn "" []
+    (d/connect (get-client)  {:db-name "taxonomy_v13"}))
+
+  (defstate ^{:on-reload :noop} conn
+    :start (get-conn))
+
+  (let [some-terms        [{:term/base-form "Kontaktmannaskap"}
+                           {:term/base-form "Fribrottare"}]
+
+        some-concepts     [{:concept/id "MZ6wMoAfyP"
+                            :concept/description "grotz"
+                            :concept/category :skill
+                            :concept/preferred-term [:term/base-form "Kontaktmannaskap"]
+                            :concept/alternative-terms #{[:term/base-form "Kontaktmannaskap"]}}
+                           {:concept/id "XYZYXYZYXYZ"
+                            :concept/description "Fribrottare"
+                            :concept/category :occupation
+                            :concept/preferred-term [:term/base-form "Fribrottare"]
+                            :concept/alternative-terms #{[:term/base-form "Fribrottare"]}}]]
+    (d/transact (get-conn) {:tx-data (vec (concat some-terms))})
+    (d/transact (get-conn) {:tx-data (vec (concat some-concepts))}))
+
+  (get-all-taxonomy-types)
+  )
+;; (stupid-debug)
