@@ -95,11 +95,13 @@
 ;; (d/q find-concept-by-preferred-term-query (get-db) "Ga")
 
 (def show-concept-history
-  '[:find ?e ?aname ?v ?tx ?added ?inst
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term
     :where
     [?e ?a ?v ?tx ?added]
     [?a :db/ident ?aname]
-    [?e :concept/id]
+    [?e :concept/id ?concept-id]
+    [?e :concept/preferred-term ?pft]
+    [?pft :term/base-form ?term]
     [?tx :db/txInstant ?inst]
     ]
   )
@@ -108,6 +110,10 @@
 (defn  get-db-hist [] (d/history (get-db)))
 
 ; (d/q show-concept-history (get-db-hist))
+
+(defn get-concept-history []
+  (d/q show-concept-history (get-db-hist))
+  )
 
 
 ;; DEMO
@@ -152,25 +158,104 @@
       :db/cardinality :db.cardinality/one
       :db/doc         "JobTech categories" ;
       }
-
      ]
-
-
     )
+
+(def term-schema
+  [{:db/ident       :term/base-form
+    :db/valueType   :db.type/string
+    :db/cardinality :db.cardinality/one
+    :db/unique      :db.unique/identity ; Should this really be unique/identity? Same term can be different concepts. /Sara
+    :db/doc         "Term value, the actual text string that is referring to concepts"}
+])
+
 
 (def more-concept-schema
   [{:db/ident       :concept/deprecated
     :db/valueType   :db.type/boolean
     :db/cardinality :db.cardinality/one
     :db/doc         "If a concept is deprecated" ;
-    }]
+    }
+   {:db/ident       :concept/replaced-by
+    :db/valueType   :db.type/ref
+    :db/cardinality :db.cardinality/many
+    :db/doc         "Refers to other concepts that is replacing this one"
+
+    }
+   ]
   )
 
 
+(def some-occupation-names
+
+  [{:concept/id                "1"
+    :concept/preferred-term    "term-id-1"
+    }
+   {:db/id          "term-id-1"
+    :term/base-form "Användbarhetsexpert"}
+   {:concept/id                "2"
+    :concept/preferred-term    "term-id-2"
+    }
+   {:db/id          "term-id-2"
+    :term/base-form "Användbarhetsdesigner"}
+
+   ])
+
+(def substitution-transaction
+  [
+   {:concept/id "1"
+    :concept/deprecated true
+    :concept/replaced-by ["3"]
+    }
+   {:concept/id "2"
+    :concept/deprecated true
+    :concept/replaced-by ["3"]
+    }
+   {:db/id                     "3"
+    :concept/id                "3"
+    :concept/preferred-term    "term-id-3"
+    }
+   {:db/id          "term-id-3"
+    :term/base-form "Interaktionsdesigner"}]
+  )
+
+
+;; (d/transact conn {:tx-data term-schema})
+
 ;; (d/transact conn {:tx-data concept-schema})
+
 ;; (d/transact conn {:tx-data more-concept-schema})
 
+;; (d/transact conn {:tx-data some-occupation-names})
 
+;; (d/transact conn {:tx-data substitution-transaction})
+
+
+
+(comment
+
+
+  Förenkla apiet,
+  History apiet har bara deprecate och add. (borde inte deprecate och add också bara visa upp deprecate om add skett och sedan blivit depricatad?)
+  Ha ett till API för replaced-by
+
+  Använd deprecated istället för att hela retracta entiteten
+
+  Add och deprecate används av dropdown listor
+  Replaced-by används som hjälp när man ska mappa om data i sitt CV, dvs en slagning som kan behöva göras on the fly vid varje upphämtning av CV:t (tvingar en att polla)
+  Hämtar alla replaced by som skapats från en viss tidpunkt.
+
+
+  CREATED  (lägg till ny)
+  DEPRECATED ( ogilla)
+  UPDATED ( ändra prefered term / lydelse  )
+
+  skapa egen endpoint för detta
+  REPLACED_BY ( ge förslag på hänvisningar  )
+
+
+
+  )
 
 
 (comment
@@ -185,9 +270,23 @@
       }
      ])
 
+  (def another-old-transaction
+    [{:concept/id "22222"
+      :concept/description "Bagare"
+      :concept/category :occupation
+
+      }
+     {:concept/id "3333"
+      :concept/description "Betongarbetare"
+      :concept/category :occupation
+      }
+     ])
+
+
 
   (def new-transaction
-    [{:concept/id "1a2s3d4f"
+    [{:concept/id "22222"
+      :concept/description "Bagare/Bullmakare"
       }
      ])
 
@@ -218,7 +317,7 @@
 
   ;; (d/create-database (get-client) {:db-name "demo"})
 
-;;(d/delete-database (get-client) {:db-name "demo"})
+;;  (d/delete-database (get-client) {:db-name "demo"})
 
 
 
@@ -269,13 +368,12 @@
 
 ;; (group-by #(nth % 3) add-and-delete-concept-history)
 
-(defn group-by-transaction [datoms]
-  "TODO group on entity id aswell"
-  (group-by #(nth % 3) datoms)
+(defn group-by-transaction-and-entity [datoms]
+  (group-by (juxt #(nth % 3) #(nth % 0) ) datoms)
   )
 
-(defn reduce-datoms-to-event
-  "A function that is used with the reduce function to convert a list of datoms from a single transaction into a event."
+#_(defn reduce-datoms-to-event
+  "A function that is used with the reduce function to convert a list of datoms from a single transaction into an event."
   [result datom]
   (let [attribute (nth datom 1)
         value (nth datom 2)
@@ -292,21 +390,75 @@
   )
 
 
-(defn determine-event-type [reduced-datoms]
-  (let [operations (map #(second %) (:operations reduced-datoms))
-        all-true (every? true? operations)
-        all-false (every? false? operations)
+(defn reduce-datoms-to-event
+  "A function that is used with the reduce function to convert a list of datoms from a single transaction into an event.  ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term"
+  [result datom]
+  (let [entity-id (nth datom 0)
+        attribute (nth datom 1)
+        value (nth datom 2)
+        transaction-id (nth datom 3)
+        operation (nth datom 4)
+        timestamp (nth datom 5)
+        concept-id (nth datom 6)
+        preferred-term (nth datom 7)
         ]
-    (cond
-      all-true  {:event-type "CREATE"}
-      all-false {:event-type "DELETE"}
-      :else     {:event-type "UPDATE"}
-      )
+    (-> result
+        (assoc attribute value)
+        (assoc :timestamp timestamp)
+        (update :operations merge {attribute operation})
+        (assoc :timestamp timestamp)
+        (assoc :tx-id transaction-id)
+        (assoc :entity-id entity-id)
+        (assoc :concept/id concept-id)
+        (assoc :term preferred-term)
+        )
     )
   )
 
 
+#_(defn determine-event-type [reduced-datoms]
+  (let [operations (map #(second %) (:operations reduced-datoms))
+        all-true (every? true? operations)
+        all-false (every? false? operations)
+        event-type (cond
+                     all-true  {:event-type "CREATED"}
+                     all-false {:event-type "DEPRECATED"}
+                     :else     {:event-type "UPDATED"}
+                     )
+        ]
+    (-> reduced-datoms
+        (merge event-type)
+        (dissoc :operations)
+        )
+    )
+  )
 
-;; Create om det bara finns true på operations
-;; Delete om det finns true på concept id
-;; Update om det finns true och false på samma attribut i samma transaction
+
+(defn convert-reduced-datom-to-event [result reduced-datom]
+
+  )
+
+(defn convert-history-to-events [datoms]
+  (let [grouped-datoms (map second (group-by-transaction-and-entity datoms))
+        reduced-datoms (map #(reduce reduce-datoms-to-event {} %)  grouped-datoms)
+        events (map determine-event-type reduced-datoms)
+        ]
+    events
+    )
+  )
+
+
+;; Create om det bara finns true på operations - stämmer ej längre
+;; Delete om det finns true på concept id - stämmer ej längre
+;; Update om det finns true och false på samma attribut i samma transaction - stämmer ej längre
+
+
+;; Skapa event ström som som visar transactionsid och entitets id
+;; Sen hydradar med as of frågor mot databasen för att få ut mer info om conceptet
+
+;; Create om det finns true på concept id
+;; Depreaate om det finns true på concept/deprecate
+
+;; Udate om det finns true och false på term/baseford
+
+;; Gör koll så att man inte kan lägga till Concept utan prefered term
