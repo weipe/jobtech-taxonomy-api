@@ -31,8 +31,8 @@
    {:swagger {:ui "/taxonomy/swagger-ui"
               :spec "/taxonomy/swagger.json"
               :data {:info {:version "1.0.0"
-                            :title "Sample API"
-                            :description "Sample Services"}}}}
+                            :title "Jobtech Taxonomy"
+                            :description "Jobtech taxonomy services"}}}}
 
    (GET "/authenticated" []
      :auth-rules authenticated?
