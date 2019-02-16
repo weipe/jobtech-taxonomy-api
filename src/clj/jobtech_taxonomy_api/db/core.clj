@@ -3,7 +3,9 @@
    [datomic.client.api :as d]
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
-   [jobtech-taxonomy-api.nano-id :refer :all]))
+   [jobtech-taxonomy-api.nano-id :refer :all]
+   [jobtech-taxonomy-api.db.events :refer [get-all-events get-all-events-since]]
+   ))
 
 #_(defstate conn
     :start (-> env :database-url d/connect)
@@ -104,7 +106,15 @@
 (format-result)))
 
 (defn show-term-history []
-(show-term-history-back show-term-history-query (d/history (get-db))))
+  (show-term-history-back show-term-history-query (d/history (get-db))))
+
+(defn show-concept-events []
+  (get-all-events (get-db))
+  )
+
+(defn show-concept-events-since [date-time]
+  (get-all-events-since (get-db) date-time)
+  )
 
 (def show-term-history-since-query
 '[:find ?e ?aname ?v ?tx ?added

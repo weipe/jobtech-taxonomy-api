@@ -51,12 +51,12 @@
      (GET "/full-history" []
        :query-params []
        :summary      "Show the complete history."
-       {:body (show-term-history)})
+       {:body (show-concept-events)})
 
      (GET "/history-since" []
        :query-params [date-time :- String]
        :summary      "Show the history since the given date. Use the format '2017-06-09 14:30:01'."
-       {:body (show-term-history-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd hh:mm:ss") date-time)))}))
+       {:body (show-concept-events-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))}))
 
    (context "/taxonomy/private-api" []
      :tags ["private"]
