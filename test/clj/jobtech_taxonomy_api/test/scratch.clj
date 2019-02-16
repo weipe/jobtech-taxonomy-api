@@ -220,6 +220,37 @@
   )
 
 
+(def add-annonsassistent
+  [{:concept/id "4"
+    :concept/preferred-term "term-id-4"}
+
+   {:db/id "term-id-4"
+    :term/base-form "Annonsassistent"
+    }
+
+   ]
+  )
+
+
+(def update-annonsassistent-term
+  [{:concept/id "4"
+    :concept/preferred-term "term-id-5"
+    }
+   {:db/id "term-id-5"
+    :term/base-form "Annonsassistent/Annonssekreterare"
+    }
+   ]
+  )
+
+
+#_(def change-preferred-term-transaction
+  [{ :concept/id                "3"
+    :concept/preferred-term    "term-id-4"
+    }
+   {:db/id          "term-id-4"
+    :term/base-form "Interaktionsdesigner/UX-designer"}]
+  )
+
 ;; (d/transact conn {:tx-data term-schema})
 
 ;; (d/transact conn {:tx-data concept-schema})
@@ -230,6 +261,10 @@
 
 ;; (d/transact conn {:tx-data substitution-transaction})
 
+
+;; (d/transact conn {:tx-data add-annonsassistent})
+
+;; (d/transact conn {:tx-data update-annonsassisten-term})
 
 
 (comment
@@ -372,6 +407,11 @@
   (group-by (juxt #(nth % 3) #(nth % 0) ) datoms)
   )
 
+
+(defn group-by-attribute [grouped-datoms]
+  (map #(group-by second %) grouped-datoms)
+  )
+
 #_(defn reduce-datoms-to-event
   "A function that is used with the reduce function to convert a list of datoms from a single transaction into an event."
   [result datom]
@@ -401,20 +441,24 @@
         timestamp (nth datom 5)
         concept-id (nth datom 6)
         preferred-term (nth datom 7)
+
         ]
     (-> result
+        (assoc :event/timestamp timestamp)
+        (assoc :event/transaction-id transaction-id)
+        (update :attribute-values conj [attribute value])
         (assoc attribute value)
-        (assoc :timestamp timestamp)
-        (update :operations merge {attribute operation})
-        (assoc :timestamp timestamp)
-        (assoc :tx-id transaction-id)
+        (update-in [:operations attribute] conj operation)
         (assoc :entity-id entity-id)
         (assoc :concept/id concept-id)
-        (assoc :term preferred-term)
+        (assoc :concept/preferred-term preferred-term)
+
         )
     )
   )
 
+
+;; blir knas med anvandbarhetsexpert
 
 #_(defn determine-event-type [reduced-datoms]
   (let [operations (map #(second %) (:operations reduced-datoms))
@@ -434,18 +478,86 @@
   )
 
 
-(defn convert-reduced-datom-to-event [result reduced-datom]
+
+(defn is-event-update-preferred-term? [datoms-grouped-by-attribute]
+  "checks if op is not all true or false"
+  (if-let [datoms (:concept/preferred-term datoms-grouped-by-attribute)]
+    (not (apply = (map #(nth % 4) datoms)))
+    false
+    )
+  )
+
+(defn is-event-create-concept? [datoms-grouped-by-attribute]
+  (if-let [datoms (:concept/id datoms-grouped-by-attribute)]
+    (every? true? (map #(nth % 4) datoms))
+    false
+    )
+  )
+
+(defn is-event-deprecated-concept? [datoms-grouped-by-attribute]
+  (if-let [datoms (:concept/deprecated datoms-grouped-by-attribute)]
+    (every? true? (map #(nth % 4) datoms))
+    false
+    )
+  )
+
+
+
+#_(defn determine-event-type [reduced-datom]
+  (let [is-created (every? true? (get-in reduced-datom [:operations :concept/id]))
+        is-deprecated (every? true? (get-in reduced-datom [:operations :concept/deprecated]))
+
+        event-type (cond
+                     is-created {:event/type "CREATED"}
+                     is-deprecated {:event/type "DEPRECATED"}
+
+                     )
+        result-with-event (merge event-type reduced-datom)
+        ]
+    (-> result-with-event
+        (dissoc :operations)
+        (dissoc :entity-id)
+        (dissoc :concept/replaced-by) ;; se hur vi gör framöver
+
+        )
+    )
+  )
+
+
+(defn determine-event-type [datoms-by-attibute]
+
 
   )
 
+
+
+
+
 (defn convert-history-to-events [datoms]
   (let [grouped-datoms (map second (group-by-transaction-and-entity datoms))
-        reduced-datoms (map #(reduce reduce-datoms-to-event {} %)  grouped-datoms)
+        reduced-datoms (map #(reduce reduce-datoms-to-event {:concept/preferred-term []} %)  grouped-datoms)
         events (map determine-event-type reduced-datoms)
         ]
     events
     )
   )
+
+
+(defn convert-all []
+  (sort-by :event/timestamp
+           (convert-history-to-events
+            (d/q show-concept-history (get-db-hist)))))
+
+
+(comment
+
+  (def datoms (d/q show-concept-history (get-db-hist)))
+  (def grouped-datoms  (map second (group-by-transaction-and-entity datoms)))
+ ;; (def reduced-datoms   (map #(reduce reduce-datoms-to-event {:concept/preferred-term []} %)  grouped-datoms)
+  (def datoms-by-attibute (group-by-attribute grouped-datoms))
+
+    )
+
 
 
 ;; Create om det bara finns true på operations - stämmer ej längre
@@ -462,3 +574,50 @@
 ;; Udate om det finns true och false på term/baseford
 
 ;; Gör koll så att man inte kan lägga till Concept utan prefered term
+
+(def datoms-update-preferred-term
+
+  #:concept{:preferred-term
+          [[7327145487499342
+            :concept/preferred-term
+            70746976177619024
+            13194139533322
+            true
+            #inst "2019-02-16T09:40:29.305-00:00"
+            "4"
+            "Annonsassistent"]
+           [7327145487499342
+            :concept/preferred-term
+            32136525856637007
+            13194139533322
+            false
+            #inst "2019-02-16T09:40:29.305-00:00"
+            "4"
+            "Annonsassistent/Annonssekreterare"]
+           [7327145487499342
+            :concept/preferred-term
+            32136525856637007
+            13194139533322
+            false
+            #inst "2019-02-16T09:40:29.305-00:00"
+            "4"
+            "Annonsassistent"]
+           [7327145487499342
+            :concept/preferred-term
+            70746976177619024
+            13194139533322
+            true
+            #inst "2019-02-16T09:40:29.305-00:00"
+            "4"
+            "Annonsassistent/Annonssekreterare"]]}
+
+  )
+
+(comment
+
+  )
+
+
+;; innehaller preffered-term op som ar olie  =  update
+;; innehaller id op true = create
+;; innehaller deprecated op true = deprecate
