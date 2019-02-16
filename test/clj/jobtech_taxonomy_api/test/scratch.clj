@@ -95,7 +95,7 @@
 ;; (d/q find-concept-by-preferred-term-query (get-db) "Ga")
 
 (def show-concept-history
-  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft
     :where
     [?e ?a ?v ?tx ?added]
     [?a :db/ident ?aname]
@@ -264,7 +264,7 @@
 
 ;; (d/transact conn {:tx-data add-annonsassistent})
 
-;; (d/transact conn {:tx-data update-annonsassisten-term})
+;; (d/transact conn {:tx-data update-annonsassistent-term})
 
 
 (comment
@@ -352,7 +352,7 @@
 
   ;; (d/create-database (get-client) {:db-name "demo"})
 
-;;  (d/delete-database (get-client) {:db-name "demo"})
+  ;; (d/delete-database (get-client) {:db-name "demo"})
 
 
 
@@ -523,10 +523,68 @@
     )
   )
 
+(defn create-event-create-concept-from-datom [datoms-grouped-by-attribute]
+
+  "TODO fix potential bugfest, first is a bit sketchy"
+  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term]  (first (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute)))]
+    {:event-type "CREATED"
+     :transaction-id transaction-id
+     :timestamp timestamp
+     :concept-id concept-id
+     :preferred-term preferred-term
+     }
+    )
+  )
+
+(defn create-event-deprecated-concept-from-datom [datoms-grouped-by-attribute]
+  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term]  (first (:concept/deprecated datoms-grouped-by-attribute))]
+    {:event-type "DEPRECATED"
+     :transaction-id transaction-id
+     :timestamp timestamp
+     :concept-id concept-id
+     :preferred-term preferred-term
+     :deprecated true
+     }
+    )
+  )
+
+(defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again]]
+  (= preferred-term-id preferred-term-id-again)
+  )
+
+(defn keep-after-update [[_ _ _ _ operation]]
+  operation
+  )
+
+(defn create-event-updated-preferred-term [datoms-grouped-by-attribute]
+  (let [datoms (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute))
+        datom-before (filter #(not (keep-after-update %)) datoms)
+        datom-after  (filter keep-after-update datoms)
+        [[_ _ _ _ _ timestamp concept-id old-preferred-term]] datom-before
+        [[_ _ _ transaction-id _ _ _ new-preferred-term]] datom-after
+        ]
+    {:event-typ "UPDATED"
+     :transaction-id transaction-id
+     :timestamp timestamp
+     :concept-id concept-id
+     :old-preferred-term old-preferred-term
+     :new-preferred-term new-preferred-term
+     }
+    )
+  )
 
 (defn determine-event-type [datoms-by-attibute]
+  (let [is-event-create-concept (is-event-create-concept? datoms-by-attibute)
+        is-event-deprecated-concept (is-event-deprecated-concept? datoms-by-attibute)
+        is-event-update-preferred-term (is-event-update-preferred-term? datoms-by-attibute)
+        ]
 
-
+    (cond
+      is-event-create-concept (create-event-create-concept-from-datom datoms-by-attibute)
+      is-event-deprecated-concept (create-event-deprecated-concept-from-datom datoms-by-attibute)
+      is-event-update-preferred-term (create-event-updated-preferred-term datoms-by-attibute)
+      )
+    )
   )
 
 
@@ -535,8 +593,8 @@
 
 (defn convert-history-to-events [datoms]
   (let [grouped-datoms (map second (group-by-transaction-and-entity datoms))
-        reduced-datoms (map #(reduce reduce-datoms-to-event {:concept/preferred-term []} %)  grouped-datoms)
-        events (map determine-event-type reduced-datoms)
+        datoms-by-attibute (group-by-attribute grouped-datoms)
+        events (map determine-event-type datoms-by-attibute)
         ]
     events
     )
@@ -544,7 +602,7 @@
 
 
 (defn convert-all []
-  (sort-by :event/timestamp
+  (sort-by :timestamp
            (convert-history-to-events
             (d/q show-concept-history (get-db-hist)))))
 
@@ -577,39 +635,45 @@
 
 (def datoms-update-preferred-term
 
-  #:concept{:preferred-term
-          [[7327145487499342
-            :concept/preferred-term
-            70746976177619024
-            13194139533322
-            true
-            #inst "2019-02-16T09:40:29.305-00:00"
-            "4"
-            "Annonsassistent"]
-           [7327145487499342
-            :concept/preferred-term
-            32136525856637007
-            13194139533322
-            false
-            #inst "2019-02-16T09:40:29.305-00:00"
-            "4"
-            "Annonsassistent/Annonssekreterare"]
-           [7327145487499342
-            :concept/preferred-term
-            32136525856637007
-            13194139533322
-            false
-            #inst "2019-02-16T09:40:29.305-00:00"
-            "4"
-            "Annonsassistent"]
-           [7327145487499342
-            :concept/preferred-term
-            70746976177619024
-            13194139533322
-            true
-            #inst "2019-02-16T09:40:29.305-00:00"
-            "4"
-            "Annonsassistent/Annonssekreterare"]]}
+   #:concept{:preferred-term
+           [[7327145487499336
+             :concept/preferred-term
+             70746976177619018
+             13194139533320
+             true
+             #inst "2019-02-16T17:10:51.894-00:00"
+             "4"
+             "Annonsassistent"
+             32136525856637001]
+            [7327145487499336
+             :concept/preferred-term
+             32136525856637001
+             13194139533320
+             false
+             #inst "2019-02-16T17:10:51.894-00:00"
+             "4"
+             "Annonsassistent"
+             32136525856637001]
+            [7327145487499336
+             :concept/preferred-term
+             70746976177619018
+             13194139533320
+             true
+             #inst "2019-02-16T17:10:51.894-00:00"
+             "4"
+             "Annonsassistent/Annonssekreterare"
+             70746976177619018]
+            [7327145487499336
+             :concept/preferred-term
+             32136525856637001
+             13194139533320
+             false
+             #inst "2019-02-16T17:10:51.894-00:00"
+             "4"
+             "Annonsassistent/Annonssekreterare"
+             70746976177619018]]}
+
+
 
   )
 
