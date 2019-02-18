@@ -7,7 +7,7 @@
   )
 
 
-(def cfg { :datomic-name "demo"
+(def cfg { :datomic-name "taxonomy_v13"
        :datomic-cfg {
                     :server-type :ion
                     :region "eu-west-1" ;; e.g. us-east-1
@@ -23,9 +23,12 @@
 
 
 (def  conn
-   (d/connect (get-client)  {:db-name "demo"} )
+  (d/connect (get-client)  {:db-name "taxonomy_v13"} )
   )
 
+(defn get-conn []
+  (d/connect (get-client)  {:db-name "taxonomy_v13"} )
+  )
 
 (defn get-db [] (d/db conn))
 
@@ -299,6 +302,17 @@
 ;; (d/transact conn {:tx-data add-annonsassistent})
 
 ;; (d/transact conn {:tx-data update-annonsassistent-term})
+
+(defn create-new-data-base []
+
+  ;; (d/delete-database (get-client) {:db-name "taxonomy_v13"})
+  (d/create-database (get-client) {:db-name "taxonomy_v13"})
+  (d/transact (get-conn) {:tx-data term-schema})
+  (d/transact (get-conn) {:tx-data concept-schema})
+  (d/transact (get-conn) {:tx-data more-concept-schema})
+  )
+
+
 
 
 (comment

@@ -16,10 +16,32 @@
 (defstate ^{:on-reload :noop} conn
   :start (d/connect (get-client)  {:db-name (:datomic-name env)}))
 
-(defn get-db [] (d/db conn))
+
+
+(def cfg { :datomic-name "taxonomy_v13"
+          :datomic-cfg {
+                        :server-type :ion
+                        :region "eu-west-1" ;; e.g. us-east-1
+                        :system "prod-jobtech-taxonomy-db"
+                        ;;:creds-profile "<your_aws_profile_if_not_using_the_default>"
+                        :endpoint "http://entry.prod-jobtech-taxonomy-db.eu-west-1.datomic.net:8182/"
+                        :proxy-port 8182}
+
+          })
+
+;; (defn get-client [] (d/client (:datomic-cfg cfg)))
+
+
+
+;; (defn get-db [] (d/db conn))
 
 (defn get-conn "" []
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
+
+(defn get-conn "" []
+(d/connect (get-client)  {:db-name "taxonomy_v13"}))
+
+
 
 (def find-concept-by-preferred-term-query
   '[:find (pull ?c
@@ -58,7 +80,8 @@
                                          ] })]
     { :msg (if retract "ok" "bad") }))
 
-(defn assert-concept "" [type desc pref-term]
+
+(defn assert-concept-part [type desc pref-term]
   (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
          tx        [{:db/id temp-id
                      :term/base-form pref-term}
@@ -68,7 +91,19 @@
                      :concept/preferred-term temp-id
                      :concept/alternative-terms #{temp-id}}]
          result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
-    { :msg (if result "ok" "bad" ) }))
+    result)
+  )
+
+
+(defn assert-concept "" [type desc pref-term]
+  (let [result (assert-concept-part type desc pref-term)
+        timestamp (nth (first (:tx-data result)) 2 )
+        ]
+
+
+    { :msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"} ) }))
+
+
 
 (def get-concepts-for-type-query
 '[:find (pull ?c
@@ -81,7 +116,7 @@
 :where [?c :concept/category ?type]])
 
 (defn get-concepts-for-type [type]
-(d/q get-concepts-for-type-query (get-db) (format ":%s" type)))
+(d/q get-concepts-for-type-query (get-db) (keyword type)))
 
 (def get-all-taxonomy-types-query
 '[:find ?v :where [_ :concept/category ?v]])
