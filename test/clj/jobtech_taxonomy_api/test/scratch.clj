@@ -107,6 +107,29 @@
   )
 
 
+(def show-deprecated-replaced-by
+  '[:find (pull ?c
+                [
+                 :concept/id
+                 :concept/description
+                 {:concept/preferred-term [:term/base-form]}
+                 {:concept/referring-terms [:term/base-form]}
+                 {:concept/replaced-by [:concept/id
+                                        {:concept/preferred-term [:term/base-form]}
+
+                                        ]}
+                 ]) ?inst
+    :in $ ?since
+    :where
+    [?c :concept/deprecated true]
+    [?c :concept/replaced-by ?rc ?tx]
+    [?tx :db/txInstant ?inst]
+    [(< ?since ?inst)]
+    ]
+  )
+
+
+
 (defn  get-db-hist [] (d/history (get-db)))
 
 ; (d/q show-concept-history (get-db-hist))
@@ -115,6 +138,10 @@
   (d/q show-concept-history (get-db-hist))
   )
 
+
+(defn get-deprecated-replaced-by []
+  (d/q show-deprecated-replaced-by (get-db))
+  )
 
 ;; DEMO
 (def database-query
@@ -479,6 +506,16 @@
 
 
 
+(defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again]]
+  (= preferred-term-id preferred-term-id-again)
+  )
+
+(defn keep-after-update [[_ _ _ _ operation]]
+  operation
+  )
+
+
+
 (defn is-event-update-preferred-term? [datoms-grouped-by-attribute]
   "checks if op is not all true or false"
   (if-let [datoms (:concept/preferred-term datoms-grouped-by-attribute)]
@@ -546,14 +583,6 @@
      :deprecated true
      }
     )
-  )
-
-(defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again]]
-  (= preferred-term-id preferred-term-id-again)
-  )
-
-(defn keep-after-update [[_ _ _ _ operation]]
-  operation
   )
 
 (defn create-event-updated-preferred-term [datoms-grouped-by-attribute]
