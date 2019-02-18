@@ -43,10 +43,11 @@
      :tags ["public"]
 
      (GET "/term" []
-       :return       String
+
        :query-params [term :- String]
        :summary      "get term"
-       (ok (str (find-concept-by-preferred-term term))))
+       {:body (find-concept-by-preferred-term term)}
+       )
 
      (GET "/full-history" []
        :query-params []
@@ -99,5 +100,12 @@
                       preferredTerm :- String]
        :summary      "Assert a new concept."
        {:body (assert-concept type description preferredTerm)})
+
+     (POST "/replace-concept"    []
+       :query-params [old-concept-id :- String
+                      new-concept-id :- String
+                      ]
+       :summary      "Replace old concept with a new concept."
+       {:body (replace-deprecated-concept old-concept-id new-concept-id)})
 
      )))

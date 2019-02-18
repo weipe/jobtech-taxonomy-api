@@ -81,6 +81,22 @@
     { :msg (if retract "ok" "bad") }))
 
 
+
+;; TODO appeda pa replaced by listan
+(defn replace-deprecated-concept [old-concept-id new-concept-id]
+  (let [data {:concept/id old-concept-id
+              :concept/replaced-by [{:concept/id new-concept-id}]
+              }
+        result (d/transact (get-conn) {:tx-data [data]})
+        timestamp (nth (first (:tx-data result)) 2 )
+        ]
+
+    { :msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"} ) }
+    )
+
+  )
+
+
 (defn assert-concept-part [type desc pref-term]
   (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
          tx        [{:db/id temp-id
@@ -100,8 +116,8 @@
         timestamp (nth (first (:tx-data result)) 2 )
         ]
 
-
     { :msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"} ) }))
+
 
 
 
