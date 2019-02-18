@@ -107,7 +107,7 @@
   )
 
 
-(def show-deprecated-replaced-by
+(def show-deprecated-replaced-by-query
   '[:find (pull ?c
                 [
                  :concept/id
@@ -139,9 +139,16 @@
   )
 
 
-(defn get-deprecated-replaced-by []
-  (d/q show-deprecated-replaced-by (get-db))
+(defn get-deprecated-replaced-by-since [date-time]
+  (d/q show-deprecated-replaced-by-query (get-db) date-time)
   )
+
+
+(defn get-deprecated-concepts-and-replaced-by []
+
+
+  )
+
 
 ;; DEMO
 (def database-query

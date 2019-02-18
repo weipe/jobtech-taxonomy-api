@@ -33,6 +33,33 @@
   )
 
 
+(def show-deprecated-replaced-by-query
+  '[:find (pull ?c
+                [
+                 :concept/id
+                 :concept/description
+                 {:concept/preferred-term [:term/base-form]}
+                 {:concept/referring-terms [:term/base-form]}
+                 {:concept/replaced-by [:concept/id
+                                        {:concept/preferred-term [:term/base-form]}
+
+                                        ]}
+                 ]) ?inst
+    :in $ ?since
+    :where
+    [?c :concept/deprecated true]
+    [?c :concept/replaced-by ?rc ?tx]
+    [?tx :db/txInstant ?inst]
+    [(< ?since ?inst)]
+    ]
+  )
+
+(defn get-deprecated-concepts-replaced-by-since [db date-time]
+  (d/q show-deprecated-replaced-by-query db  date-time)
+  )
+
+
+
 (defn  get-db-hist [db] (d/history db))
 
 
