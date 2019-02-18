@@ -33,7 +33,7 @@
 
 
 
-;; (defn get-db [] (d/db conn))
+(defn get-db [] (d/db conn))
 
 (defn get-conn "" []
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
