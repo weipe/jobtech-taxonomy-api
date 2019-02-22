@@ -9,7 +9,8 @@
             [clojure.data.json :as json]
             [clj-time [format :as f]]
             [clj-time.coerce :as c]
-            [jobtech-taxonomy-api.db.core :refer :all]))
+            [jobtech-taxonomy-api.db.core :refer :all]
+            ))
 
 (defn access-error [_ _]
   (unauthorized {:error "unauthorized"}))

@@ -2,7 +2,6 @@
   (:require
    [datomic.client.api :as d]
    [mount.core :refer [defstate]]
-
    )
   )
 
@@ -32,7 +31,6 @@
     ]
   )
 
-
 (def show-deprecated-replaced-by-query
   '[:find (pull ?c
                 [
@@ -58,8 +56,6 @@
   (d/q show-deprecated-replaced-by-query db  date-time)
   )
 
-
-
 (defn  get-db-hist [db] (d/history db))
 
 
@@ -71,8 +67,6 @@
 (defn group-by-attribute [grouped-datoms]
   (map #(group-by second %) grouped-datoms)
   )
-
-
 
 (defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again]]
   (= preferred-term-id preferred-term-id-again)
@@ -161,9 +155,6 @@
       )
     )
   )
-
-
-
 
 
 (defn convert-history-to-events [datoms]

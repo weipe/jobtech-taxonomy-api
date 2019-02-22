@@ -2,10 +2,8 @@
   (:require
    [datomic.client.api :as d]
    [mount.core :refer [defstate]]
-
    )
   )
-
 
 (def cfg { :datomic-name "taxonomy_v13"
        :datomic-cfg {
@@ -735,3 +733,49 @@
 ;; innehaller preffered-term op som ar olie  =  update
 ;; innehaller id op true = create
 ;; innehaller deprecated op true = deprecate
+
+
+(def countries-and-continents
+  [
+   {:continent-id 2 :continent-name "EU"  :country-id 4 :country-name "Sweden"  }
+   {:continent-id 2 :continent-name "EU"  :country-id 5 :country-name "Finlad"  }
+
+   ]
+
+  )
+
+
+(defn create-continent-temp-id [id]
+  (str "continent-" id)
+  )
+
+(defn create-continent [id name]
+  {:id id :name name}
+  )
+
+(defn lookup-continent [result continent-id continent-name]
+
+  (let [temp-id (create-continent-temp-id continent-id)
+        continent (or (get temp-id result)  (create-continent continent-id continent-name)  )
+        ]
+    (assoc result temp-id continent)
+    )
+
+  )
+
+(defn reduce-converter [result item]
+
+  (let [country-id (:country-id item )
+        country-name (:country-name item )
+        continent-id (:continent-id item )
+        continent-name (:continent-name item )
+        new-result  (lookup-continent result continent-id continent-name)
+
+        ]
+
+
+       (assoc new-result country-id {:id country-id :name country-name :continent-id (create-continent-temp-id continent-id)  })
+
+
+    )
+  )
