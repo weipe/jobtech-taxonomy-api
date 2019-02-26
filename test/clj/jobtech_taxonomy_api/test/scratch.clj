@@ -25,7 +25,7 @@
   )
 
 (defn get-conn []
-  (d/connect (get-client)  {:db-name "taxonomy_v13"} )
+  (d/connect (get-client)  {:db-name "jobtech-taxonomy-production"} )
   )
 
 (defn get-db [] (d/db conn))
@@ -106,7 +106,6 @@
     [?tx :db/txInstant ?inst]
     ]
   )
-
 
 (def show-deprecated-replaced-by-query
   '[:find (pull ?c
@@ -739,9 +738,7 @@
   [
    {:continent-id 2 :continent-name "EU"  :country-id 4 :country-name "Sweden"  }
    {:continent-id 2 :continent-name "EU"  :country-id 5 :country-name "Finlad"  }
-
    ]
-
   )
 
 
@@ -770,12 +767,7 @@
         continent-id (:continent-id item )
         continent-name (:continent-name item )
         new-result  (lookup-continent result continent-id continent-name)
-
         ]
-
-
-       (assoc new-result country-id {:id country-id :name country-name :continent-id (create-continent-temp-id continent-id)  })
-
-
+    (assoc new-result country-id {:id country-id :name country-name :continent-id (create-continent-temp-id continent-id)  })
     )
   )
