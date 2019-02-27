@@ -143,6 +143,8 @@
   )
 
 (defn determine-event-type [datoms-by-attibute]
+  "This function will return nil events when the event is not CREATED, DEPRECATED or UPDATED.
+Like replaced-by will return nil."
   (let [is-event-create-concept (is-event-create-concept? datoms-by-attibute)
         is-event-deprecated-concept (is-event-deprecated-concept? datoms-by-attibute)
         is-event-update-preferred-term (is-event-update-preferred-term? datoms-by-attibute)
@@ -160,7 +162,7 @@
 (defn convert-history-to-events [datoms]
   (let [grouped-datoms (map second (group-by-transaction-and-entity datoms))
         datoms-by-attibute (group-by-attribute grouped-datoms)
-        events (map determine-event-type datoms-by-attibute)
+        events (filter some? (map determine-event-type datoms-by-attibute))
         ]
     events
     )
