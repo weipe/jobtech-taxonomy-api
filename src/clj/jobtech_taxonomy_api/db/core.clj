@@ -4,7 +4,7 @@
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
    [jobtech-taxonomy-api.nano-id :refer :all]
-   [jobtech-taxonomy-api.db.events :refer [get-all-events get-all-events-since get-deprecated-concepts-replaced-by-since]]
+   [jobtech-taxonomy-api.db.events :refer :all]
    ))
 
 #_(defstate conn
@@ -50,13 +50,10 @@
 
 (defn retract-concept [id]
   (let [retract (d/transact (get-conn) {:tx-data
-
                                         [
                                          {:concept/id id
                                           :concept/deprecated true
                                           }
-
-
                                          ] })]
     { :msg (if retract "ok" "bad") }))
 
@@ -73,7 +70,6 @@
 
     { :msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"} ) }
     )
-
   )
 
 
