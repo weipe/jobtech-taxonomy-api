@@ -36,7 +36,8 @@
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.4.0"]
-                 [selmer "1.12.5"]]
+                 [selmer "1.12.5"]
+                 [org.clojure/tools.logging "0.4.1"]]
 
   :min-lein-version "2.0.0"
 
