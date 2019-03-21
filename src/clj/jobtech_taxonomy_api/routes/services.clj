@@ -12,8 +12,7 @@
    [clj-time [format :as f]]
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
-   [clojure.tools.logging :as log]
-   [clojure.pprint :as pp]))
+   [clojure.tools.logging :as log]))
 
 (import java.util.Date)
 
@@ -46,9 +45,7 @@
 
 (def service-routes
   (api
-   {:exceptions
-    {:handlers
-     {::ex/default (custom-handler response/internal-server-error :fatal)}}
+   {
 
     :swagger {:ui "/taxonomy/swagger-ui"
               :spec "/taxonomy/swagger.json"
@@ -66,14 +63,9 @@
 
      (GET "/term" []
        :query-params [term :- String]
-       :responses {200 {:schema find-concept-by-preferred-term-schema}
-                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary "Search for a term across all taxonomies."
-       (let [result (find-concept-by-preferred-term term)]
-         (if (not (empty? result))
-           (response/ok result)
-           (response/not-found {:reason :NOT_FOUND}))))
+       :summary      "get term"
+       :return       find-concept-by-preferred-term-schema
+       {:body (find-concept-by-preferred-term term)})
 
      (GET "/full-history" []
        :query-params []

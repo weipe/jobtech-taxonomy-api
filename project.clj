@@ -59,7 +59,7 @@
 
    :dev           [:project/dev :profiles/dev]
    :local         [:project/local :profiles/local]
-   :test          [:project/dev :project/test :profiles/test]
+   :test          [:project/test :profiles/test]
 
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
