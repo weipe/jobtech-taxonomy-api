@@ -12,6 +12,12 @@ You will need [Leiningen][1] 2.0 or above installed.
 
 ## Running
 
+You can either run from your terminal or from repl
+
+## Controlling from Terminal
+
+You can either use a web server or a local Datomic.
+
 To start a web server for the application, run this
 to connect to AWS Datomic:
 
@@ -26,6 +32,8 @@ Then open the following URL in a web browser:
     http://127.0.0.1:4444/taxonomy/swagger-ui
 
 ## Controlling from nREPL
+
+Go to project (somewhere in the folder, doesn't matter where, WE THINK) and start your repl.
 
 To start the HTTP server and any other components such as databases, run the start function:
 
