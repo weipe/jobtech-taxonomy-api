@@ -5,11 +5,11 @@
             [jobtech-taxonomy-api.db.core :refer :all]
             [jobtech-taxonomy-api.middleware.formats :as formats]
             [muuntaja.core :as m]
-            [mount.core :as mount]
-            ))
+            [mount.core :as mount]))
 
 
 ;; https://github.com/metosin/compojure-api/wiki/Testing-api-endpoints  ; skiljer sig lite
+
 
 (defn parse-json [body]
   (m/decode formats/instance "application/json" body))
@@ -25,12 +25,9 @@
 (deftest test-app
 
   (testing "full history"
-    (let [response (app  (request :get "/taxonomy/public-api/full-history")  )
+    (let [response (app  (request :get "/taxonomy/public-api/full-history"))
           status (:status response)
           body (parse-json (:body response))
-          an-event (first (:value body))
-          ]
+          an-event (first body)]
       ;; (prn an-event)
-      (is (= "CREATED" (:event-type an-event)))))
-
-  )
+      (is (= "CREATED" (:event-type an-event))))))
