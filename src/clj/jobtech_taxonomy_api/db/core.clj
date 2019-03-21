@@ -26,6 +26,8 @@
   '[:find (pull ?c
                 [:concept/id
                  :concept/description
+                 :concept/category
+                 :concept/deprecated
                  {:concept/preferred-term [:term/base-form]}
                  {:concept/referring-terms [:term/base-form]}])
     :in $ ?term
@@ -36,12 +38,15 @@
   "The response schema for the query below."
   [[{:concept/id s/Str
      :concept/description s/Str
+     :concept/category s/Keyword
+     (s/optional-key :concept/deprecated) s/Bool
      :concept/preferred-term {:term/base-form s/Str}
      (s/optional-key :concept/referring-terms) {:term/base-form s/Str}}]])
 
 (defn find-concept-by-preferred-term [term]
-  {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]
-   :post [(is (not (empty? %)) "no such term")]}
+  {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
+  (if (= term "___THROW_EXCEPTION")
+    (throw (NullPointerException. "Throwing test exception.")))
   (d/q find-concept-by-preferred-term-query (get-db) term))
 
 (def find-concept-by-id-query
