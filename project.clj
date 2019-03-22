@@ -60,6 +60,8 @@
    :dev           [:project/dev :profiles/dev]
    :local         [:project/local :profiles/local]
    :test          [:project/test :profiles/test]
+   :integration-test  [:project/dev :project/integration-test :profiles/test]
+
 
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
@@ -87,6 +89,11 @@
                    :repl-options {:init-ns user}}
    :project/test {:jvm-opts ["-Dconf=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
+
+   :project/integration-test {:jvm-opts ["-Dconf=test-config.edn"]
+                  :resource-paths ["env/integration-test/resources"]}
    :profiles/dev {}
    :profiles/local {}
-   :profiles/test {}})
+   :profiles/test {}}
+
+  )
