@@ -10,13 +10,12 @@
 
 ;; https://github.com/metosin/compojure-api/wiki/Testing-api-endpoints  ; skiljer sig lite
 
+
 (comment
   För att köra testerna
   1. Byt till detta namespace
   2.  Kör (run-tests)   nu körs use-fixtures som laddar app
-  3. nu kan du utveckla och köra testerna en och en
-
-  )
+  3. nu kan du utveckla och köra testerna en och en)
 
 (defn parse-json [body]
   (m/decode formats/instance "application/json" body))
@@ -39,29 +38,21 @@
       (prn body)
       (is (= "CREATED" (:event-type an-event))))))
 
-
-
 (defn get-preffered-term-from-get-api-concept [concept-id]
   (let [response (app (request :get "/taxonomy/private-api/concept" {"id" concept-id}))
         body (parse-json (:body response))
-        term (:term/base-form (:concept/preferred-term (ffirst body)))
-        ]
+        term (:term/base-form (:concept/preferred-term (ffirst body)))]
     ;(prn body "   " term)
-    term)
-  )
+    term))
 
 (defn test-get-preferred-term [concept-id expected-term]
   (let [actual-term (get-preffered-term-from-get-api-concept concept-id)]
     (is (= expected-term actual-term)
-        (str "GET concept-id " concept-id " should have term " expected-term " not " actual-term )  )  )
-  )
-
-
+        (str "GET concept-id " concept-id " should have term " expected-term " not " actual-term))))
 
 (deftest ^:integration test-call-api
   (testing "call api"
     (test-get-preferred-term "pdg3_Q49_97y" "Fartygsagent")
-    (test-get-preferred-term "zYcH_Mn7_1hu" "Skeppsklarerare/Waterclerk")
+    (test-get-preferred-term "zYcH_Mn7_1hu"
 
-    )
-  )
+                             "Skeppsklarerare/Waterclerk")))

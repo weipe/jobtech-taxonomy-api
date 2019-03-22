@@ -45,9 +45,7 @@
 
 (def service-routes
   (api
-   {
-
-    :swagger {:ui "/taxonomy/swagger-ui"
+   {:swagger {:ui "/taxonomy/swagger-ui"
               :spec "/taxonomy/swagger.json"
               :data {:info {:version "1.0.0"
                             :title "Jobtech Taxonomy"
