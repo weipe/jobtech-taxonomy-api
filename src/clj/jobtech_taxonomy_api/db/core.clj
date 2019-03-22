@@ -3,6 +3,7 @@
    [datomic.client.api :as d]
    [schema.core :as s]
    [clojure.test :refer [is]]
+   [clojure.set :as set]
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
    [jobtech-taxonomy-api.nano-id :refer :all]
@@ -27,27 +28,30 @@
                 [:concept/id
                  :concept/description
                  :concept/category
-                 :concept/deprecated
-                 {:concept/preferred-term [:term/base-form]}
-                 {:concept/referring-terms [:term/base-form]}])
+                 :concept/deprecated])
     :in $ ?term
     :where [?t :term/base-form ?term]
     [?c :concept/preferred-term ?t]])
 
 (def find-concept-by-preferred-term-schema
   "The response schema for the query below."
-  [[{:concept/id s/Str
-     :concept/description s/Str
-     :concept/category s/Keyword
-     (s/optional-key :concept/deprecated) s/Bool
-     :concept/preferred-term {:term/base-form s/Str}
-     (s/optional-key :concept/referring-terms) {:term/base-form s/Str}}]])
+  [{:id s/Str
+    :description s/Str
+    :category s/Keyword
+    (s/optional-key :deprecated) s/Bool}])
+
+(defn find-concept-by-preferred-term-simplificator [concept]
+  "Rename the keys to exclude the concept/-part."
+  (map #(set/rename-keys (first %) {:concept/id :id, :concept/description :description, :concept/category :category :concept/deprecated :deprecated})
+       concept))
 
 (defn find-concept-by-preferred-term [term]
+  "Lookup concepts by term. Special term '___THROW_EXCEPTION' throws an exception, handy for testning error handling."
   {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
   (if (= term "___THROW_EXCEPTION")
     (throw (NullPointerException. "Throwing test exception.")))
-  (d/q find-concept-by-preferred-term-query (get-db) term))
+  (find-concept-by-preferred-term-simplificator
+   (d/q find-concept-by-preferred-term-query (get-db) term)))
 
 (def find-concept-by-id-query
   '[:find (pull ?c
@@ -151,7 +155,8 @@
     :transaction-id s/Int
     :timestamp java.util.Date
     :concept-id s/Str
-    :preferred-term s/Str}])
+    :preferred-term s/Str
+    (s/optional-key :deprecated) s/Bool}])
 
 (defn show-concept-events []
   (get-all-events (get-db)))

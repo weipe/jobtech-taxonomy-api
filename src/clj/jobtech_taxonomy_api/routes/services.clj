@@ -12,7 +12,8 @@
    [clj-time [format :as f]]
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
-   [clojure.tools.logging :as log]))
+   [clojure.tools.logging :as log]
+   [clojure.pprint :as pp]))
 
 (import java.util.Date)
 
@@ -45,7 +46,11 @@
 
 (def service-routes
   (api
-   {:swagger {:ui "/taxonomy/swagger-ui"
+   {:exceptions
+    {:handlers
+     {::ex/default (custom-handler response/internal-server-error :fatal)}}
+
+    :swagger {:ui "/taxonomy/swagger-ui"
               :spec "/taxonomy/swagger.json"
               :data {:info {:version "1.0.0"
                             :title "Jobtech Taxonomy"
@@ -61,26 +66,43 @@
 
      (GET "/term" []
        :query-params [term :- String]
-       :summary      "get term"
-       :return       find-concept-by-preferred-term-schema
-       {:body (find-concept-by-preferred-term term)})
+       :responses {200 {:schema find-concept-by-preferred-term-schema}
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Search for a term across all taxonomies."
+       (let [result (find-concept-by-preferred-term term)]
+         (if (not (empty? result))
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND}))))
 
      (GET "/full-history" []
        :query-params []
+       :responses {200 {:schema show-concept-events-schema}
+                   500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the complete history."
-       :return       show-concept-events-schema
-       {:body (show-concept-events)})
+       (response/ok (show-concept-events)))
 
      (GET "/concept-history-since" []
        :query-params [date-time :- String]
-       :summary      "Show the history since the given date. Use the format '2017-06-09 14:30:01'."
-       :return       show-concept-events-schema
-       {:body (show-concept-events-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))})
+       :responses {200 {:schema show-concept-events-schema}
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
+       (let [result (show-concept-events-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))]
+         (if (not (empty? result))
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND}))))
 
      (GET "/deprecated-concept-history-since" []
        :query-params [date-time :- String]
-       :summary      "Show the history since the given date. Use the format '2017-06-09 14:30:01'."
-       {:body (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))}))
+       :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
+       (let [result (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))]
+         (if (not (empty? result))
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND})))))
 
    (context "/taxonomy/private-api" []
      :tags ["private"]
