@@ -178,6 +178,36 @@
         date-time)
    (format-result)))
 
+(defn ignore-case [string]
+  (str "(?i:.*" string  ".*)")
+  )
+
+(def find-concepts-by-term-start-query
+  '[:find (pull ?c
+                [:concept/id
+                 :concept/description
+                 :concept/category
+                 {:concept/preferred-term [:term/base-form]}
+                 {:concept/referring-terms [:term/base-form]}])
+    :in $ ?letter
+    :where [?c :concept/preferred-term ?t]
+    [?t :term/base-form ?term]
+    ;;[(.startsWith ^String ?term ?letter)]
+    [(.matches ^String ?term ?letter)]
+    ])
+
+(defn get-concepts-by-term-start [letter]
+  (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
+
+
+#_[:find ?name
+ :in $ ?year ?letter
+ :where [?a :artist/type :artist.type/group]
+ [?a :artist/name ?name]
+ [?a :artist/startYear ?year]
+ [(.startsWith ^String ?name ?letter)]]
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -65,6 +65,13 @@
        :return       find-concept-by-preferred-term-schema
        {:body (find-concept-by-preferred-term term)})
 
+     (GET "/term-part" []
+       :query-params [term :- String]
+       :summary      "get concepts by part of string"
+       ;;:return       find-concept-by-preferred-term-schema
+       {:body (get-concepts-by-term-start term)})
+
+
      (GET "/full-history" []
        :query-params []
        :summary      "Show the complete history."
