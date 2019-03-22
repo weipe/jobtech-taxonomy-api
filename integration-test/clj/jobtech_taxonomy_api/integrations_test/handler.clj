@@ -1,4 +1,4 @@
-(ns jobtech-taxonomy-api.test.handler
+(ns jobtech-taxonomy-api.integrations-test.handler
   (:require [clojure.test :refer :all]
             [ring.mock.request :refer :all]
             [jobtech-taxonomy-api.handler :refer :all]

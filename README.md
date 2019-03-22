@@ -16,6 +16,8 @@ You can either run from your terminal or from repl
 
 ## Controlling from Terminal
 
+Go to project the folder .../jobtech-taxonomy-api
+
 You can either use a web server or a local Datomic.
 
 To start a web server for the application, run this
