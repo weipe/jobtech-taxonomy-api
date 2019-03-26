@@ -63,6 +63,7 @@
 
    (context "/taxonomy/public-api" []
      :tags ["public"]
+     :auth-rules authenticated?
 
      (GET "/term" []
        :query-params [term :- String]
@@ -80,7 +81,6 @@
        :summary      "get concepts by part of string"
        ;;:return       find-concept-by-preferred-term-schema
        {:body (get-concepts-by-term-start term)})
-
 
      (GET "/full-history" []
        :query-params []
