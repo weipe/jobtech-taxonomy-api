@@ -8,6 +8,7 @@
    [compojure.api.exception :as ex]
    [buddy.auth.accessrules :refer [restrict]]
    [buddy.auth :refer [authenticated?]]
+   [buddy.auth.http :as http]
    [clojure.data.json :as json]
    [clj-time [format :as f]]
    [clj-time.coerce :as c]
@@ -44,6 +45,16 @@
     (log/log type (.getMessage e))
     (f {:message (.getMessage e), :type type})))
 
+(defn swagger-ui-user? [request]
+  (not (empty? (re-seq #"/swagger-ui" (http/-get-header request "referer")))))
+
+(defn authorized-private? [request]
+  (= (http/-get-header request "api-key") "2f904e245c1f5"))
+
+(defn authenticated-and-authorized? [request]
+  (and (authenticated? request)
+       (authorized-private? request)))
+
 (def service-routes
   (api
    {:exceptions
@@ -57,13 +68,12 @@
                             :description "Jobtech taxonomy services"}}}}
 
    (GET "/authenticated" []
-     :auth-rules authenticated?
      :current-user user
      (response/ok {:user user}))
 
    (context "/taxonomy/public-api" []
      :tags ["public"]
-     :auth-rules authenticated?
+     :auth-rules {:or [authenticated? swagger-ui-user?]}
 
      (GET "/term" []
        :query-params [term :- String]
@@ -79,7 +89,7 @@
      (GET "/term-part" []
        :query-params [term :- String]
        :summary      "get concepts by part of string"
-       ;;:return       find-concept-by-preferred-term-schema
+                 ;;:return       find-concept-by-preferred-term-schema
        {:body (get-concepts-by-term-start term)})
 
      (GET "/full-history" []
@@ -113,9 +123,8 @@
 
    (context "/taxonomy/private-api" []
      :tags ["private"]
-
-     ;; POST /concept/is-deprecated -- skicka in IDn, returnera vilka av dessa som är deprecated:
-     ;;                                { { id:<id>, referTo <new-id> }, ... }
+            ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
+     :auth-rules {:or [swagger-ui-user? authenticated-and-authorized?]}
 
      (GET "/concept"    []
        :query-params [id :- String]
@@ -137,7 +146,7 @@
        :summary      "Retract the concept with the given ID."
        {:body (retract-concept id)})
 
-     ;; alternativeTerms (optional - kolla om/hur det görs)
+            ;; alternativeTerms (optional - kolla om/hur det görs)
      (POST "/concept"    []
        :query-params [type :- String
                       description :- String

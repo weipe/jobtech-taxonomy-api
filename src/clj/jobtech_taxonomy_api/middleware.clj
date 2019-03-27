@@ -30,7 +30,6 @@
 
 (defn my-authfn
   [request token]
-  (println "HSADLjHASjKDAHSDKJASHDAKJSDHJK 5")
   (let [token (keyword token)]
     (get tokens token nil)))
 
