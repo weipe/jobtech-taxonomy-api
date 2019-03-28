@@ -36,11 +36,9 @@ Go to project (somewhere in the folder, doesn't matter where, WE THINK) and star
 
 To start the HTTP server and any other components such as databases, run the start function:
 
-    (start)
-
-or with a port number:
-
     (start-app ["-p" "4444"])
+
+(you can just do _(start)_, but the above command with port number is preferred)
 
 Run the following command to start the HTTP server:
 
