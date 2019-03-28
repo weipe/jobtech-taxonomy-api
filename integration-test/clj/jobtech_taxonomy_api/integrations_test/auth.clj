@@ -60,3 +60,9 @@
     (let [[status body] (send-request-to-json-service :get "/taxonomy/private-api/concept/types"
                                                       "api-key" (middleware/get-token :admin))]
       (is (= status 200)))))
+
+(deftest ^:integration authenticated-and-unauthorized-access-private
+  (testing "unauthorized access to /taxonomy/private-api/concept/types"
+    (let [[status body] (send-request-to-json-service :get "/taxonomy/private-api/concept/types"
+                                                      "api-key" (middleware/get-token :user))]
+      (is (= status 401)))))
