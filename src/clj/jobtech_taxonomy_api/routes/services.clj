@@ -13,12 +13,11 @@
    [clj-time [format :as f]]
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
+   [jobtech-taxonomy-api.middleware :as middleware]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
 (import java.util.Date)
-
-(def private-api-key-until-moved-to-configuration "2f904e245c1f5")
 
 (def date? (partial instance? Date))
 
@@ -48,7 +47,7 @@
     (f {:message (.getMessage e), :type type})))
 
 (defn authorized-private? [request]
-  (= (http/-get-header request "api-key") private-api-key-until-moved-to-configuration))
+  (= (http/-get-header request "api-key") (middleware/get-token :admin)))
 
 (def service-routes
   (api

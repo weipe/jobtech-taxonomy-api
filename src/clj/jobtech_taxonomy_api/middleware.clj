@@ -21,12 +21,17 @@
 
 ;; Define a in-memory relation between tokens and users:
 (def tokens {:2f904e245c1f5 :admin
-             :45c1f5e3f05d0 :foouser
+             :45c1f5e3f05d0 :user
              :111 :mupp})
+
+(defn get-token [token]
+  "i e (get-token :admin)"
+  (str (clojure.string/replace (first (filter #(= (% tokens) token) (keys tokens))) #":" "")))
 
 ;; Define an authfn, function with the responsibility
 ;; to authenticate the incoming token and return an
 ;; identity instance
+
 
 (defn my-authfn
   [request token]
