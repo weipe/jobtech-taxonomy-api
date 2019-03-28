@@ -27,7 +27,7 @@
       req)))
 
 (defn send-request [method endpoint & [hdr val]]
-  (let [req (make-request :get endpoint hdr val)]
+  (let [req (make-request method endpoint hdr val)]
     (app req)))
 
 (defn send-request-to-json-service [method endpoint & [hdr val]]
