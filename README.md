@@ -35,7 +35,7 @@ Then open the following URL in a web browser:
 
 ## Controlling from nREPL
 
-Go to project (somewhere in the folder, doesn't matter where, WE THINK) and start your repl.
+Go to project (somewhere in the folder, doesn't matter where, WE THINK) and start your repl (If IntelliJ, dont' forget to  load project in your repl).
 
 To start the HTTP server and any other components such as databases, run the start function:
 
