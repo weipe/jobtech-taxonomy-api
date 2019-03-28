@@ -29,9 +29,6 @@ To use a local Datomic, run:
 
     lein with-profile local run -p 4444
 
-Then open the following URL in a web browser:
-
-    http://127.0.0.1:4444/taxonomy/swagger-ui
 
 ## Controlling from nREPL
 
@@ -48,6 +45,11 @@ or with a port number:
 Run the following command to start the HTTP server:
 
     (mount/start #'jobtech-taxonomy-api.core/http-server)
+    
+## NExt step
+Then open the following URL in a web browser:
+
+    http://127.0.0.1:4444/taxonomy/swagger-ui
 
 ## License
 
