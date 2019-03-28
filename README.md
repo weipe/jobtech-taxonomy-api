@@ -29,25 +29,25 @@ To use a local Datomic, run:
 
     lein with-profile local run -p 4444
 
-Then open the following URL in a web browser:
-
-    http://127.0.0.1:4444/taxonomy/swagger-ui
 
 ## Controlling from nREPL
 
-Go to project (somewhere in the folder, doesn't matter where, WE THINK) and start your repl.
+Go to project (somewhere in the folder, doesn't matter where, WE THINK) and start your repl (If IntelliJ, dont' forget to  load project in your repl).
 
 To start the HTTP server and any other components such as databases, run the start function:
 
-    (start)
-
-or with a port number:
-
     (start-app ["-p" "4444"])
+
+(you can just do _(start)_, but the above command with port number is preferred)
 
 Run the following command to start the HTTP server:
 
     (mount/start #'jobtech-taxonomy-api.core/http-server)
+    
+## NExt step
+Then open the following URL in a web browser:
+
+    http://127.0.0.1:4444/taxonomy/swagger-ui
 
 ## Running a query
 
