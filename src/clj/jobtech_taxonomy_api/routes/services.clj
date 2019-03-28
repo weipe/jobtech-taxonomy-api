@@ -18,6 +18,8 @@
 
 (import java.util.Date)
 
+(def private-api-key-until-moved-to-configuration "2f904e245c1f5")
+
 (def date? (partial instance? Date))
 
 (def date-validator
@@ -45,27 +47,21 @@
     (log/log type (.getMessage e))
     (f {:message (.getMessage e), :type type})))
 
-(defn swagger-ui-user? [request]
-  (not (empty? (re-seq #"/swagger-ui" (http/-get-header request "referer")))))
-
 (defn authorized-private? [request]
-  (= (http/-get-header request "api-key") "2f904e245c1f5"))
-
-(defn authenticated-and-authorized? [request]
-  (and (authenticated? request)
-       (authorized-private? request)))
+  (= (http/-get-header request "api-key") private-api-key-until-moved-to-configuration))
 
 (def service-routes
   (api
    {:exceptions
     {:handlers
      {::ex/default (custom-handler response/internal-server-error :fatal)}}
-
     :swagger {:ui "/taxonomy/swagger-ui"
               :spec "/taxonomy/swagger.json"
               :data {:info {:version "1.0.0"
                             :title "Jobtech Taxonomy"
-                            :description "Jobtech taxonomy services"}}}}
+                            :description "Jobtech taxonomy services"}
+                     ;; API header config found here: https://gist.github.com/Deraen/ef7f65d7ec26f048e2bb
+                     :securityDefinitions {:api_key {:type "apiKey" :name "api-key" :in "header"}}}}}
 
    (GET "/authenticated" []
      :current-user user
@@ -73,7 +69,7 @@
 
    (context "/taxonomy/public-api" []
      :tags ["public"]
-     :auth-rules {:or [authenticated? swagger-ui-user?]}
+     :auth-rules authenticated?
 
      (GET "/term" []
        :query-params [term :- String]
@@ -124,7 +120,7 @@
    (context "/taxonomy/private-api" []
      :tags ["private"]
             ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
-     :auth-rules {:or [swagger-ui-user? authenticated-and-authorized?]}
+     :auth-rules {:and [authenticated? authorized-private?]}
 
      (GET "/concept"    []
        :query-params [id :- String]
