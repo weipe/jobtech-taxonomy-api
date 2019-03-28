@@ -54,3 +54,24 @@ Then open the following URL in a web browser:
 GPLv3
 
 Copyright © 2019 Jobtech
+
+## CREATE dev-config for local developement
+Create the file "dev-config.edn" with this content
+
+```
+;; WARNING
+;; The dev-config.edn file is used for local environment variables, such as database credentials.
+;; This file is listed in .gitignore and will be excluded from version control by Git.
+
+{:dev true
+ :port 3000
+ ;; when :nrepl-port is set the application starts the nREPL server on load
+ :nrepl-port 7000
+ 
+ ; set your dev database connection URL here
+ ; :database-url "datomic:free://localhost:4334/jobtech_taxonomy_api_dev"
+
+ ; alternatively, you can use the datomic mem db for development:
+ ; :database-url "datomic:mem://jobtech_taxonomy_api_datomic_dev"
+}
+```
