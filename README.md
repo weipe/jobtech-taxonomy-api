@@ -49,6 +49,10 @@ Then open the following URL in a web browser:
 
     http://127.0.0.1:4444/taxonomy/swagger-ui
 
+## Running a query
+
+    curl -X GET -H  "api-key: 2f904e245c1f5" --header 'Accept: application/json' 'http://127.0.0.1:4444/taxonomy/public-api/term?term=Danska'
+
 ## License
 
 GPLv3

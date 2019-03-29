@@ -8,10 +8,12 @@
    [compojure.api.exception :as ex]
    [buddy.auth.accessrules :refer [restrict]]
    [buddy.auth :refer [authenticated?]]
+   [buddy.auth.http :as http]
    [clojure.data.json :as json]
    [clj-time [format :as f]]
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
+   [jobtech-taxonomy-api.middleware :as middleware]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
@@ -44,25 +46,29 @@
     (log/log type (.getMessage e))
     (f {:message (.getMessage e), :type type})))
 
+(defn authorized-private? [request]
+  (= (http/-get-header request "api-key") (middleware/get-token :admin)))
+
 (def service-routes
   (api
    {:exceptions
     {:handlers
      {::ex/default (custom-handler response/internal-server-error :fatal)}}
-
     :swagger {:ui "/taxonomy/swagger-ui"
               :spec "/taxonomy/swagger.json"
               :data {:info {:version "1.0.0"
                             :title "Jobtech Taxonomy"
-                            :description "Jobtech taxonomy services"}}}}
+                            :description "Jobtech taxonomy services"}
+                     ;; API header config found here: https://gist.github.com/Deraen/ef7f65d7ec26f048e2bb
+                     :securityDefinitions {:api_key {:type "apiKey" :name "api-key" :in "header"}}}}}
 
    (GET "/authenticated" []
-     :auth-rules authenticated?
      :current-user user
      (response/ok {:user user}))
 
    (context "/taxonomy/public-api" []
      :tags ["public"]
+     :auth-rules authenticated?
 
      (GET "/term" []
        :query-params [term :- String]
@@ -80,7 +86,6 @@
        :summary      "get concepts by part of string"
        ;;:return       find-concept-by-preferred-term-schema
        {:body (take 10 (get-concepts-by-term-start term))})
-
 
      (GET "/full-history" []
        :query-params []
@@ -113,9 +118,8 @@
 
    (context "/taxonomy/private-api" []
      :tags ["private"]
-
-     ;; POST /concept/is-deprecated -- skicka in IDn, returnera vilka av dessa som är deprecated:
-     ;;                                { { id:<id>, referTo <new-id> }, ... }
+            ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
+     :auth-rules {:and [authenticated? authorized-private?]}
 
      (GET "/concept"    []
        :query-params [id :- String]
@@ -137,7 +141,7 @@
        :summary      "Retract the concept with the given ID."
        {:body (retract-concept id)})
 
-     ;; alternativeTerms (optional - kolla om/hur det görs)
+            ;; alternativeTerms (optional - kolla om/hur det görs)
      (POST "/concept"    []
        :query-params [type :- String
                       description :- String
