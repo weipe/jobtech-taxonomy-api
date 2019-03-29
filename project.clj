@@ -8,7 +8,7 @@
                  [clojure.java-time "0.3.2"]
                  [org.clojure/data.json "0.2.6"]
                  [com.datomic/client-cloud "0.8.71"] ; for env/dev/
-                 [com.datomic/client-pro "0.8.28" ]  ; for env/local/
+                 [com.datomic/client-pro "0.8.28"]  ; for env/local/
                  [clj-time "0.15.0"]
                  [com.google.guava/guava "25.1-jre"]
                  [compojure "1.6.1"]
@@ -36,7 +36,8 @@
                  [ring/ring-core "1.7.1"]
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.4.0"]
-                 [selmer "1.12.5"]]
+                 [selmer "1.12.5"]
+                 [org.clojure/tools.logging "0.4.1"]]
 
   :min-lein-version "2.0.0"
 
@@ -45,6 +46,7 @@
   :resource-paths ["resources"]
   :target-path "target/%s/"
   :main ^:skip-aot jobtech-taxonomy-api.core
+  :cljfmt {}
 
   :plugins [[lein-immutant "2.1.0"]
             [lein-kibit "0.1.2"]
@@ -58,7 +60,8 @@
 
    :dev           [:project/dev :profiles/dev]
    :local         [:project/local :profiles/local]
-   :test          [:project/dev :project/test :profiles/test]
+   :test          [:project/test :profiles/test]
+   :integration-test  [:project/dev :project/integration-test :profiles/test]
 
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
@@ -86,6 +89,11 @@
                    :repl-options {:init-ns user}}
    :project/test {:jvm-opts ["-Dconf=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
+
+   :project/integration-test {:jvm-opts ["-Dconf=test-config.edn"]
+                              :resource-paths ["env/integration-test/resources"]}
    :profiles/dev {}
    :profiles/local {}
-   :profiles/test {}})
+   :profiles/test  {}
+   }
+  )

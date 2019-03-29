@@ -1,11 +1,13 @@
 (ns jobtech-taxonomy-api.db.core
   (:require
    [datomic.client.api :as d]
+   [schema.core :as s]
+   [clojure.test :refer [is]]
+   [clojure.set :as set]
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
    [jobtech-taxonomy-api.nano-id :refer :all]
-   [jobtech-taxonomy-api.db.events :refer :all]
-   ))
+   [jobtech-taxonomy-api.db.events :refer :all]))
 
 #_(defstate conn
     :start (-> env :database-url d/connect)
@@ -16,25 +18,40 @@
 (defstate ^{:on-reload :noop} conn
   :start (d/connect (get-client)  {:db-name (:datomic-name env)}))
 
-
 (defn get-db [] (d/db conn))
 
 (defn get-conn "" []
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
 
-
 (def find-concept-by-preferred-term-query
   '[:find (pull ?c
                 [:concept/id
                  :concept/description
-                 {:concept/preferred-term [:term/base-form]}
-                 {:concept/referring-terms [:term/base-form]}])
+                 :concept/category
+                 :concept/deprecated])
     :in $ ?term
     :where [?t :term/base-form ?term]
     [?c :concept/preferred-term ?t]])
 
+(def find-concept-by-preferred-term-schema
+  "The response schema for the query below."
+  [{:id s/Str
+    :description s/Str
+    :category s/Keyword
+    (s/optional-key :deprecated) s/Bool}])
+
+(defn find-concept-by-preferred-term-simplificator [concept]
+  "Rename the keys to exclude the concept/-part."
+  (map #(set/rename-keys (first %) {:concept/id :id, :concept/description :description, :concept/category :category :concept/deprecated :deprecated})
+       concept))
+
 (defn find-concept-by-preferred-term [term]
-  (d/q find-concept-by-preferred-term-query (get-db) term))
+  "Lookup concepts by term. Special term '___THROW_EXCEPTION' throws an exception, handy for testning error handling."
+  {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
+  (if (= term "___THROW_EXCEPTION")
+    (throw (NullPointerException. "Throwing test exception.")))
+  (find-concept-by-preferred-term-simplificator
+   (d/q find-concept-by-preferred-term-query (get-db) term)))
 
 (def find-concept-by-id-query
   '[:find (pull ?c
@@ -50,28 +67,23 @@
 
 (defn retract-concept [id]
   (let [retract (d/transact (get-conn) {:tx-data
-                                        [
-                                         {:concept/id id
-                                          :concept/deprecated true
-                                          }
-                                         ] })]
-    { :msg (if retract "ok" "bad") }))
+                                        [{:concept/id id
+                                          :concept/deprecated true}]})]
+
+    {:msg (if retract "ok" "bad")}))
 
 
 
 ;; TODO appeda pa replaced by listan
+
+
 (defn replace-deprecated-concept [old-concept-id new-concept-id]
   (let [data {:concept/id old-concept-id
-              :concept/replaced-by [{:concept/id new-concept-id}]
-              }
+              :concept/replaced-by [{:concept/id new-concept-id}]}
         result (d/transact (get-conn) {:tx-data [data]})
-        timestamp (nth (first (:tx-data result)) 2 )
-        ]
+        timestamp (nth (first (:tx-data result)) 2)]
 
-    { :msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"} ) }
-    )
-  )
-
+    {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
 (defn assert-concept-part [type desc pref-term]
   (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
@@ -83,140 +95,169 @@
                      :concept/preferred-term temp-id
                      :concept/alternative-terms #{temp-id}}]
          result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
-    result)
-  )
-
+        result))
 
 (defn assert-concept "" [type desc pref-term]
   (let [result (assert-concept-part type desc pref-term)
-        timestamp (nth (first (:tx-data result)) 2 )
-        ]
+        timestamp (nth (first (:tx-data result)) 2)]
 
-    { :msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"} ) }))
-
-
-
+    {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
 (def get-concepts-for-type-query
-'[:find (pull ?c
-[:concept/id
- :concept/description
- :concept/category
- {:concept/preferred-term [:term/base-form]}
- {:concept/referring-terms [:term/base-form]}])
-:in $ ?type
-:where [?c :concept/category ?type]])
+  '[:find (pull ?c
+                [:concept/id
+                 :concept/description
+                 :concept/category
+                 {:concept/preferred-term [:term/base-form]}
+                 {:concept/referring-terms [:term/base-form]}])
+    :in $ ?type
+    :where [?c :concept/category ?type]])
 
 (defn get-concepts-for-type [type]
-(d/q get-concepts-for-type-query (get-db) (keyword type)))
+  (d/q get-concepts-for-type-query (get-db) (keyword type)))
 
 (def get-all-taxonomy-types-query
-'[:find ?v :where [_ :concept/category ?v]])
+  '[:find ?v :where [_ :concept/category ?v]])
 
 (defn get-all-taxonomy-types "" []
-(->> (d/q get-all-taxonomy-types-query (get-db))
-(sort-by first)))
+  (->> (d/q get-all-taxonomy-types-query (get-db))
+       (sort-by first)))
 
 (def show-term-history-query
-'[:find ?e ?aname ?v ?tx ?added
-:where
-[?e ?a ?v ?tx ?added]
-[?a :db/ident ?aname]])
+  '[:find ?e ?aname ?v ?tx ?added
+    :where
+    [?e ?a ?v ?tx ?added]
+    [?a :db/ident ?aname]])
 
 (defn ^:private format-result [result-list]
-(->> result-list
-(sort-by first)
-(partition-by #(let [[entity col value tx is-added] %] entity)) ; group by entity for better readability
+  (->> result-list
+       (sort-by first)
+       (partition-by #(let [[entity col value tx is-added] %] entity)) ; group by entity for better readability
 ;; The rest is for placing the result vectors into neat,
 ;; self-explanatory hashmaps - suitable for jsonifying later
-(map (fn [entity-group]
-       (map (fn [entity]
-              (let [[ent col value tx is-added] entity]
-                {:entity ent :col col :value value :tx tx :op (if is-added 'add 'retract)}))
-            entity-group)))))
+       (map (fn [entity-group]
+              (map (fn [entity]
+                     (let [[ent col value tx is-added] entity]
+                       {:entity ent :col col :value value :tx tx :op (if is-added 'add 'retract)}))
+                   entity-group)))))
 
 (defn ^:private show-term-history-back [q db]
-(->>
-(d/q q db)
-(format-result)))
+  (->>
+   (d/q q db)
+   (format-result)))
 
 (defn show-term-history []
   (show-term-history-back show-term-history-query (d/history (get-db))))
 
+(def show-concept-events-schema
+  "The response schema for the query below."
+  [{:event-type s/Str
+    :transaction-id s/Int
+    :timestamp java.util.Date
+    :concept-id s/Str
+    :preferred-term s/Str
+    (s/optional-key :deprecated) s/Bool}])
+
 (defn show-concept-events []
-  (get-all-events (get-db))
-  )
+  (get-all-events (get-db)))
 
 (defn show-concept-events-since [date-time]
-  (get-all-events-since (get-db) date-time)
-  )
+  (get-all-events-since (get-db) date-time))
 
 (defn show-deprecated-concepts-and-replaced-by [date-time]
-  (get-deprecated-concepts-replaced-by-since (get-db) date-time)
-  )
-
+  (get-deprecated-concepts-replaced-by-since (get-db) date-time))
 
 (def show-term-history-since-query
-'[:find ?e ?aname ?v ?tx ?added
-:in $ ?since
-:where
-[?e  ?a ?v ?tx ?added]
-[?a  :db/ident ?aname]
-[?tx :db/txInstant ?created-at]
-[(< ?since ?created-at)]])
+  '[:find ?e ?aname ?v ?tx ?added
+    :in $ ?since
+    :where
+    [?e  ?a ?v ?tx ?added]
+    [?a  :db/ident ?aname]
+    [?tx :db/txInstant ?created-at]
+    [(< ?since ?created-at)]])
 
 (defn show-term-history-since [date-time]
-(->>
-(d/q show-term-history-since-query
-(get-db)
-date-time)
-(format-result)))
+  (->>
+   (d/q show-term-history-since-query
+        (get-db)
+        date-time)
+   (format-result)))
+
+(defn ignore-case [string]
+  (str "(?i:.*" string  ".*)")
+  )
+
+(def find-concepts-by-term-start-query
+  '[:find (pull ?c
+                [:concept/id
+                 :concept/description
+                 :concept/category
+                 {:concept/preferred-term [:term/base-form]}
+                 {:concept/referring-terms [:term/base-form]}])
+    :in $ ?letter
+    :where [?c :concept/preferred-term ?t]
+    [?t :term/base-form ?term]
+    ;;[(.startsWith ^String ?term ?letter)]
+    [(.matches ^String ?term ?letter)]
+    ])
+
+(defn get-concepts-by-term-start [letter]
+  (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
+
+
+#_[:find ?name
+ :in $ ?year ?letter
+ :where [?a :artist/type :artist.type/group]
+ [?a :artist/name ?name]
+ [?a :artist/startYear ?year]
+ [(.startsWith ^String ?name ?letter)]]
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn stupid-debug
-"The env/dev/resources/config.edn is not read when REPLing here, so
+  "The env/dev/resources/config.edn is not read when REPLing here, so
   we just make an ugly hack to be able to get on."
-[]
+  []
 
-(defn get-client [] (d/client {:server-type :peer-server
-                               :access-key  "myaccesskey"
-                               :secret      "mysecret"
-                               :endpoint    "localhost:8998"}))
+  (defn get-client [] (d/client {:server-type :peer-server
+                                 :access-key  "myaccesskey"
+                                 :secret      "mysecret"
+                                 :endpoint    "localhost:8998"}))
 
-(defn get-conn "" []
-(d/connect (get-client)  {:db-name "taxonomy_v13"}))
+  (defn get-conn "" []
+    (d/connect (get-client)  {:db-name "taxonomy_v13"}))
 
-(def conn (get-conn))
+  (def conn (get-conn))
 
-(defn get-db [] (d/db conn))
+  (defn get-db [] (d/db conn))
 
-(let [some-terms        [{:term/base-form "Kontaktmannaskap"}
-                         {:term/base-form "Fribrottare"}
-                         {:term/base-form "Begravningsentreprenör"}]
+  (let [some-terms        [{:term/base-form "Kontaktmannaskap"}
+                           {:term/base-form "Fribrottare"}
+                           {:term/base-form "Begravningsentreprenör"}]
 
-some-concepts     [{:concept/id "MZ6wMoAfyP"
-                    :concept/description "grotz"
-                    :concept/category :skill
-                    :concept/preferred-term [:term/base-form "Kontaktmannaskap"]
-                    :concept/alternative-terms #{[:term/base-form "Kontaktmannaskap"]}}
-                   {:concept/id "XYZYXYZYXYZ"
-                    :concept/description "Fribrottare"
-                    :concept/category :occupation
-                    :concept/preferred-term [:term/base-form "Fribrottare"]
-                    :concept/alternative-terms #{[:term/base-form "Fribrottare"]}}
-                   {:concept/id "ZZZZZZZZZZZ"
-                    :concept/description "Begravningsentreprenör"
-                    :concept/category :occupation
-                    :concept/preferred-term [:term/base-form "Begravningsentreprenör"]
-                    :concept/alternative-terms #{[:term/base-form "Begravningsentreprenör"]}}]]
-(d/transact (get-conn) {:tx-data (vec (concat some-terms))})
-(d/transact (get-conn) {:tx-data (vec (concat some-concepts))}))
+        some-concepts     [{:concept/id "MZ6wMoAfyP"
+                            :concept/description "grotz"
+                            :concept/category :skill
+                            :concept/preferred-term [:term/base-form "Kontaktmannaskap"]
+                            :concept/alternative-terms #{[:term/base-form "Kontaktmannaskap"]}}
+                           {:concept/id "XYZYXYZYXYZ"
+                            :concept/description "Fribrottare"
+                            :concept/category :occupation
+                            :concept/preferred-term [:term/base-form "Fribrottare"]
+                            :concept/alternative-terms #{[:term/base-form "Fribrottare"]}}
+                           {:concept/id "ZZZZZZZZZZZ"
+                            :concept/description "Begravningsentreprenör"
+                            :concept/category :occupation
+                            :concept/preferred-term [:term/base-form "Begravningsentreprenör"]
+                            :concept/alternative-terms #{[:term/base-form "Begravningsentreprenör"]}}]]
+    (d/transact (get-conn) {:tx-data (vec (concat some-terms))})
+    (d/transact (get-conn) {:tx-data (vec (concat some-concepts))}))
 
-(get-all-taxonomy-types)
-(get-concepts-for-type :occupation)
-(assert-concept "skill" "weqweqw" "fsdfsdfsd")
+  (get-all-taxonomy-types)
+  (get-concepts-for-type :occupation)
+  (assert-concept "skill" "weqweqw" "fsdfsdfsd")
 ;; (retract-concept "ZZZZZZZZZZZ")
-)
+  )
 ;; (stupid-debug)
