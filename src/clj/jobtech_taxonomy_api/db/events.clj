@@ -4,23 +4,25 @@
    [mount.core :refer [defstate]]))
 
 (def show-concept-history
-  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft ?cat
     :where
     [?e ?a ?v ?tx ?added]
     [?a :db/ident ?aname]
     [?e :concept/id ?concept-id]
     [?e :concept/preferred-term ?pft]
+    [?e :concept/category ?cat]
     [?pft :term/base-form ?term]
     [?tx :db/txInstant ?inst]])
 
 (def show-concept-history-since-query
-  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft ?cat
     :in $ ?since
     :where
     [?e ?a ?v ?tx ?added]
     [?a :db/ident ?aname]
     [?e :concept/id ?concept-id]
     [?e :concept/preferred-term ?pft]
+    [?e :concept/category ?cat]
     [?pft :term/base-form ?term]
     [?tx :db/txInstant ?inst]
     [(< ?since ?inst)]])
@@ -53,7 +55,7 @@
 (defn group-by-attribute [grouped-datoms]
   (map #(group-by second %) grouped-datoms))
 
-(defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again]]
+(defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again cat]]
   (= preferred-term-id preferred-term-id-again))
 
 (defn keep-after-update [[_ _ _ _ operation]]
@@ -78,17 +80,19 @@
 (defn create-event-create-concept-from-datom [datoms-grouped-by-attribute]
 
   "TODO fix potential bugfest, first is a bit sketchy"
-  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term]  (first (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute)))]
+  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term _ cat]  (first (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute)))]
     {:event-type "CREATED"
      :transaction-id transaction-id
+     :category cat
      :timestamp timestamp
      :concept-id concept-id
      :preferred-term preferred-term}))
 
 (defn create-event-deprecated-concept-from-datom [datoms-grouped-by-attribute]
-  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term]  (first (:concept/deprecated datoms-grouped-by-attribute))]
+  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term _ cat]  (first (:concept/deprecated datoms-grouped-by-attribute))]
     {:event-type "DEPRECATED"
      :transaction-id transaction-id
+     :category cat
      :timestamp timestamp
      :concept-id concept-id
      :preferred-term preferred-term
@@ -98,10 +102,11 @@
   (let [datoms (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute))
         datom-before (filter #(not (keep-after-update %)) datoms)
         datom-after  (filter keep-after-update datoms)
-        [[_ _ _ _ _ timestamp concept-id old-preferred-term]] datom-before
-        [[_ _ _ transaction-id _ _ _ new-preferred-term]] datom-after]
+        [[_ _ _ _ _ timestamp concept-id old-preferred-term _ _]] datom-before
+        [[_ _ _ transaction-id _ _ _ new-preferred-term _ cat]] datom-after]
     {:event-type "UPDATED"
      :transaction-id transaction-id
+     :category cat
      :timestamp timestamp
      :concept-id concept-id
      :old-preferred-term old-preferred-term
