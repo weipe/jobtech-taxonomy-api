@@ -77,15 +77,15 @@
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Search for a term across all taxonomies."
        (let [result (find-concept-by-preferred-term term)]
-         (if (not (empty? result))
+         (if (not-empty result)
            (response/ok result)
            (response/not-found {:reason :NOT_FOUND}))))
 
      (GET "/term-part" []
        :query-params [term :- String]
        :summary      "get concepts by part of string"
-                 ;;:return       find-concept-by-preferred-term-schema
-       {:body (get-concepts-by-term-start term)})
+       ;;:return       find-concept-by-preferred-term-schema
+       {:body (take 10 (get-concepts-by-term-start term))})
 
      (GET "/full-history" []
        :query-params []
