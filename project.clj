@@ -3,7 +3,8 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
 
-  :dependencies [[buddy "2.0.0"]
+  :dependencies [[jobtech-taxonomy-database "0.1.0-SNAPSHOT"]
+                 [buddy "2.0.0"]
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/data.json "0.2.6"]
@@ -22,7 +23,6 @@
                  [metosin/muuntaja "0.6.3"]
                  [metosin/ring-http-response "0.9.1"]
                  [mount "0.1.15"]
-                 [nano-id "0.9.3"]
                  [nrepl "0.5.3"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/tools.cli "0.4.1"]

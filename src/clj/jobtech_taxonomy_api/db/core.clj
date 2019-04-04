@@ -8,7 +8,7 @@
    [clojure.set :as set]
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
-   [jobtech-taxonomy-api.nano-id :refer :all]
+   [jobtech-taxonomy-database.nano-id :as nano]
    [jobtech-taxonomy-api.db.events :refer :all]))
 
 #_(defstate conn
@@ -91,7 +91,7 @@
   (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
          tx        [{:db/id temp-id
                      :term/base-form pref-term}
-                    {:concept/id (generate-new-id)
+                    {:concept/id (nano/generate-new-id-with-underscore)
                      :concept/description desc
                      :concept/category (keyword (str type))
                      :concept/preferred-term temp-id

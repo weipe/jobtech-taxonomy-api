@@ -10,6 +10,12 @@ You will need [Leiningen][1] 2.0 or above installed.
 
 [1]: https://github.com/technomancy/leiningen
 
+You will also need to install jobtech-taxonomy-database 0.1.0-SNAPSHOT
+in your local repository:
+
+    cd <.....>/jobtech-taxonomy-database
+    lein install
+
 ## Running
 
 You can either run from your terminal or from repl
@@ -43,7 +49,7 @@ To start the HTTP server and any other components such as databases, run the sta
 Run the following command to start the HTTP server:
 
     (mount/start #'jobtech-taxonomy-api.core/http-server)
-    
+
 ## NExt step
 Then open the following URL in a web browser:
 
@@ -71,7 +77,7 @@ Create the file "dev-config.edn" with this content
  :port 3000
  ;; when :nrepl-port is set the application starts the nREPL server on load
  :nrepl-port 7000
- 
+
  ; set your dev database connection URL here
  ; :database-url "datomic:free://localhost:4334/jobtech_taxonomy_api_dev"
 
