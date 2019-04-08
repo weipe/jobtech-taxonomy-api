@@ -53,6 +53,20 @@ Then open the following URL in a web browser:
 
     curl -X GET -H  "api-key: 2f904e245c1f5" --header 'Accept: application/json' 'http://127.0.0.1:4444/taxonomy/public-api/term?term=Danska'
 
+## Testing
+
+There are two main test directories: test/ and integration-test/. The
+former is for unit tests and the latter for functional testing.
+
+Run the tests in test/ by
+
+    lein test
+
+Run all tests including the tests in integration-test/ by
+
+    lein with-profile integration-test test
+
+
 ## License
 
 GPLv3

@@ -3,7 +3,8 @@
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
 
-  :dependencies [[buddy "2.0.0"]
+  :dependencies [[jobtech-taxonomy-database "0.1.0-SNAPSHOT"]
+                 [buddy "2.0.0"]
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/data.json "0.2.6"]
@@ -22,7 +23,6 @@
                  [metosin/muuntaja "0.6.3"]
                  [metosin/ring-http-response "0.9.1"]
                  [mount "0.1.15"]
-                 [nano-id "0.9.3"]
                  [nrepl "0.5.3"]
                  [org.clojure/clojure "1.10.0"]
                  [org.clojure/tools.cli "0.4.1"]
@@ -61,7 +61,7 @@
    :dev           [:project/dev :profiles/dev]
    :local         [:project/local :profiles/local]
    :test          [:project/test :profiles/test]
-   :integration-test  [:project/dev :project/integration-test :profiles/test]
+   :integration-test  [:project/integration-test :profiles/integration-test]
 
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
@@ -91,9 +91,18 @@
                   :resource-paths ["env/test/resources"]}
 
    :project/integration-test {:jvm-opts ["-Dconf=test-config.edn"]
-                              :resource-paths ["env/integration-test/resources"]}
+                              :dependencies [[expound "0.7.2"]
+                                             [pjstadig/humane-test-output "0.9.0"]
+                                             [prone "1.6.1"]
+                                             [ring/ring-devel "1.7.1"]
+                                             [ring/ring-mock "0.3.2"]]
+                              :plugins      [[com.jakemccrary/lein-test-refresh "0.23.0"]]
+                              :source-paths ["env/integration-test/clj"]
+                              :resource-paths ["env/integration-test/resources"]
+                              :test-paths ["integration-test/clj"]}
    :profiles/dev {}
    :profiles/local {}
    :profiles/test  {}
+   :profiles/integration-test  {}
    }
   )
