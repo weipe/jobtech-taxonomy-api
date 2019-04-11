@@ -97,7 +97,7 @@
                                              [ring/ring-devel "1.7.1"]
                                              [ring/ring-mock "0.3.2"]]
                               :plugins      [[com.jakemccrary/lein-test-refresh "0.23.0"]]
-                              :source-paths ["env/integration-test/clj"]
+                              :source-paths ["env/integration-test/clj" "integration-test/clj"]
                               :resource-paths ["env/integration-test/resources"]
                               :test-paths ["integration-test/clj"]}
    :profiles/dev {}
