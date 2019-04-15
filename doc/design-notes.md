@@ -62,7 +62,7 @@ Exemepel:
 * Type ahead (Ifyllnadshjälp i skapandet av annonser)
 * Översätta mellan standarder SSYK -> ISCO  för leverans till Eures
 * Validera annonser som kommit in i äldre taxonomiversion via DXA. Behöver se om värdena ändrats nyligen.
-* Signal om förändring av Taxonomin för att refrescka cachear.
+* Signal om förändring av Taxonomin för att refresha cachear.
 
 
 Vi måste komma med rekomendationer vilka id:n man ska använda.
