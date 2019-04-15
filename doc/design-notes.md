@@ -48,3 +48,27 @@ Exemepel:
 }
 
 ]
+
+
+
+### Anteckningar efter möte med ledigt arbete
+
+#### Vad de använder Taxonomi-tjänsterna till
+
+* Validering av data
+* Drop downlistor (Ifyllnadshjälp i skapandet av annonser)
+* Behöver kunna hämta yrkesbenämningar givet yrkesgrupp
+* Behöver kunna hämta yrkesgrupp givet yrkesområde
+* Type ahead (Ifyllnadshjälp i skapandet av annonser)
+* Översätta mellan standarder SSYK -> ISCO  för leverans till Eures
+* Validera annonser som kommit in i äldre taxonomiversion via DXA. Behöver se om värdena ändrats nyligen.
+* Signal om förändring av Taxonomin för att refrescka cachear.
+
+
+Vi måste komma med rekomendationer vilka id:n man ska använda.
+Landskoder, 2-ställig, 3-ställig. Kommunkod
+
+
+När man väljer Utbildninginriktning så vill man bara få förslag på giltiga utbildningsnivåer.
+
+
