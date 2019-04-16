@@ -256,3 +256,6 @@
 ;; (retract-concept "ZZZZZZZZZZZ")
   )
 ;; (stupid-debug)
+
+;;  time datbase query  (time (get-all-events-since (get-db) #inst "2019-04-10"))
+;; if you want to get less output do   (let [_ (time (get-all-events-since (get-db) #inst "2019-04-10" ))])

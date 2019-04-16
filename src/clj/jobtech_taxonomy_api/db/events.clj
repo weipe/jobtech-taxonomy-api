@@ -6,26 +6,45 @@
 (def show-concept-history
   '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft ?cat
     :where
-    [?e ?a ?v ?tx ?added]
-    [?a :db/ident ?aname]
     [?e :concept/id ?concept-id]
     [?e :concept/preferred-term ?pft]
     [?e :concept/category ?cat]
     [?pft :term/base-form ?term]
+    [?e ?a ?v ?tx ?added]
+    [?a :db/ident ?aname]
     [?tx :db/txInstant ?inst]])
 
 (def show-concept-history-since-query
   '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft ?cat
     :in $ ?since
     :where
-    [?e ?a ?v ?tx ?added]
-    [?a :db/ident ?aname]
-    [?e :concept/id ?concept-id]
+
     [?e :concept/preferred-term ?pft]
-    [?e :concept/category ?cat]
     [?pft :term/base-form ?term]
+    [?e :concept/id ?concept-id]
+    [?e :concept/category ?cat]
+    [?e ?a ?v ?tx ?added]
     [?tx :db/txInstant ?inst]
-    [(< ?since ?inst)]])
+    [(< ?since ?inst)]
+    [?a :db/ident ?aname]
+    ]
+  )
+
+#_(def show-concept-history-since-transaction-query
+  '[:find ?e ?aname ?v ?tx ?added ?concept-id ?term ?pft ?cat
+    :in $ ?fromtx
+    :where
+    [?e :concept/preferred-term ?pft]
+    [?pft :term/base-form ?term]
+    [?e :concept/id ?concept-id]
+    [?e :concept/category ?cat]
+    [?e ?a ?v ?tx ?added]
+    [?tx :db/txInstant]
+    [(< ?fromtx ?tx)]
+    [?a :db/ident ?aname]
+    ]
+  )
+
 
 (def show-deprecated-replaced-by-query
   '[:find (pull ?c
