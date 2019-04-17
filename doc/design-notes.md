@@ -76,8 +76,7 @@ När man väljer Utbildninginriktning så vill man bara få förslag på giltiga
 ## Använd enbart Jobtech Taxonomy id:n
 Använd enbart Jobtech taxonomy id:n för allt. Använd aldrig SSYK kod för att identifiera en yrkesgrupp eller en SUN-kod för att identifiera en utbildningsinriktning. Dessa är inte beständiga över tid. Översätt istället Jobtech Taxonomy id:n till SSYK vid den tidpunkt då SSYK:t behövs.
 
-## Spara alltid id tillsammans med term / label
-När man persisterar Platsannonser, CVn med mera som använder taxonomivärden bör man alltid spara id och term tillsammans. 
-Det gör det lättare att hantera datat istället för att tvingas slå upp referenser. 
+## Spara och skicka alltid data med id tillsammans med term / label
+När man persisterar eller skickar Platsannonser, CVn med mera som använder taxonomivärden bör man alltid spara id och term tillsammans. Det gör det lättare att hantera datat istället för att tvingas slå upp referenser. Om man har kontrol 
 
 
