@@ -56,3 +56,21 @@
     (test-get-preferred-term "zYcH_Mn7_1hu"
 
                              "Skeppsklarerare/Waterclerk")))
+
+
+
+
+(defn create-concept []
+  (let [request (request :post "/taxonomy/private-api/concept")
+        request-with-query (query-string request {"type" "occupation-name"
+                                                  "description" "test-fartygsagent"
+                                                  "preferredTerm" "test-fartygsagent"
+                                                  })
+        request-with-header  (header request-with-query "api-key" "2f904e245c1f5")
+
+        _ (prn   request-with-header)
+        response (app request-with-header)
+        body (parse-json (:body response))
+        ]
+                                        ;(prn body "   " term)
+    body))

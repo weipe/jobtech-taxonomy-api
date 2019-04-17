@@ -87,12 +87,16 @@
        ;;:return       find-concept-by-preferred-term-schema
        {:body (take 10 (get-concepts-by-term-start term))})
 
-     (GET "/full-history" []
+;; Jag tog bort den eftersom den tar 15 sekunder att köra. Vi får hitta något annat sätt att dumpa databasen på.
+
+     #_(GET "/full-history" []
        :query-params []
        :responses {200 {:schema show-concept-events-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the complete history."
        (response/ok (show-concept-events)))
+
+
 
      (GET "/concept-history-since" []
        :query-params [date-time :- String]

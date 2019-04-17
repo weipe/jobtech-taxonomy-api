@@ -3,10 +3,12 @@
    [datomic.client.api :as d]
    [schema.core :as s]
    [clojure.test :refer [is]]
+   [clj-time.coerce :as c]
+   [clj-time [format :as f]]
    [clojure.set :as set]
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
-   [jobtech-taxonomy-api.nano-id :refer :all]
+   [jobtech-taxonomy-database.nano-id :as nano]
    [jobtech-taxonomy-api.db.events :refer :all]))
 
 #_(defstate conn
@@ -89,7 +91,7 @@
   (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
          tx        [{:db/id temp-id
                      :term/base-form pref-term}
-                    {:concept/id (generate-new-id)
+                    {:concept/id (nano/generate-new-id-with-underscore)
                      :concept/description desc
                      :concept/category (keyword (str type))
                      :concept/preferred-term temp-id
@@ -155,7 +157,10 @@
     :transaction-id s/Int
     :timestamp java.util.Date
     :concept-id s/Str
-    :preferred-term s/Str
+    :category s/Keyword
+    (s/optional-key :preferred-term) s/Str
+    (s/optional-key :old-preferred-term) s/Str
+    (s/optional-key :new-preferred-term) s/Str
     (s/optional-key :deprecated) s/Bool}])
 
 (defn show-concept-events []
@@ -184,8 +189,7 @@
    (format-result)))
 
 (defn ignore-case [string]
-  (str "(?i:.*" string  ".*)")
-  )
+  (str "(?i:.*" string  ".*)"))
 
 (def find-concepts-by-term-start-query
   '[:find (pull ?c
@@ -198,23 +202,14 @@
     :where [?c :concept/preferred-term ?t]
     [?t :term/base-form ?term]
     ;;[(.startsWith ^String ?term ?letter)]
-    [(.matches ^String ?term ?letter)]
-    ])
+    [(.matches ^String ?term ?letter)]])
 
 (defn get-concepts-by-term-start [letter]
   (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
 
-
-#_[:find ?name
- :in $ ?year ?letter
- :where [?a :artist/type :artist.type/group]
- [?a :artist/name ?name]
- [?a :artist/startYear ?year]
- [(.startsWith ^String ?name ?letter)]]
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 (defn stupid-debug
   "The env/dev/resources/config.edn is not read when REPLing here, so
@@ -261,3 +256,6 @@
 ;; (retract-concept "ZZZZZZZZZZZ")
   )
 ;; (stupid-debug)
+
+;;  time datbase query  (time (get-all-events-since (get-db) #inst "2019-04-10"))
+;; if you want to get less output do   (let [_ (time (get-all-events-since (get-db) #inst "2019-04-10" ))])
