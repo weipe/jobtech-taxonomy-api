@@ -22,18 +22,76 @@
 <body>
   <h1>Jobtech Taxonomy Viewer</h1>
 
+  <select id="relation-type" name="relation-type"></select>
+  <input id="Render" type="button" value="render" onclick="e=document.getElementById('relation-type'); renderGraph(e.options[e.selectedIndex].value)" />
+
   <div id="elementSelector">
     <div id="plot"></div>
   </div>
 
   <script src="/js/d3.v3.min.js"></script>
+
+
+
+<!-- --------------------------------------------- -->
+<!-- Script to populate the relation type dropdown -->
+<!-- --------------------------------------------- -->
+    <script>
+    let dropdown = document.getElementById('relation-type');
+    dropdown.length = 0;
+
+    let defaultOption = document.createElement('option');
+    defaultOption.text = 'Choose relation type';
+
+    dropdown.add(defaultOption);
+    dropdown.selectedIndex = 0;
+
+    const url = 'http://127.0.0.1:4444/relation/types';
+
+    fetch(url)
+      .then(
+        function(response) {
+            if (response.status !== 200) {
+                console.warn('Looks like there was a problem. Status Code: ' +
+                             response.status);
+                return;
+            }
+
+            // Examine the text in the response
+            response.json().then(function(data) {
+                let option;
+
+    	        for (let i = 0; i < data.length; i++) {
+                    option = document.createElement('option');
+      	            option.text = data[i];
+      	            option.value = data[i];
+      	            dropdown.add(option);
+    	        }
+            });
+        }
+    )
+    .catch(function(err) {
+        console.error('Fetch Error -', err);
+    });
+  </script>
+
+
+
+<!-- --------------------------------------------- -->
+<!-- Script to render graph                        -->
+<!-- --------------------------------------------- -->
   <script>
 
-// /clusters.json  main-headline-to-headline /graph.json?relation-type=hyperonym
-d3.json("hyperonym.json", function (error, clusters) {
+function renderGraph(relationType) {
 
-    var width = 960,
-        height = 400000;
+// /clusters.json  main-headline-to-headline /relation/graph?relation-type=hyperonym
+//d3.json("hyperonym.json", function (error, clusters) {
+d3.json("/relation/graph?relation-type="+relationType, function (error, clusters) {
+
+    var width = 960;
+    //var height = 400000;
+    var height = 2000;
+    //alert(nodes.length);
 
     var cluster = d3.layout.cluster()
         .size([height, width - 160]);
@@ -74,6 +132,6 @@ d3.json("hyperonym.json", function (error, clusters) {
     d3.select(self.frameElement).style("height", height + "px");
 
 })
-
+}
   </script>
 </body>

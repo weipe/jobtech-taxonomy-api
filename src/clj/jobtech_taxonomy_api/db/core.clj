@@ -136,6 +136,15 @@
 ;; (get-relation-graph :main-headline-to-headline)
 
 
+(def get-relation-types-query
+  '[:find ?v :where [_ :relation/type ?v]])
+
+
+(defn get-relation-types []
+  (->> (d/q get-relation-types-query (get-db))
+       (sort-by first)
+       (apply concat)))
+
 ;; TODO appeda pa replaced by listan
 
 

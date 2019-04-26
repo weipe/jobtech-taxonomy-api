@@ -66,7 +66,7 @@
      :current-user user
      (response/ok {:user user}))
 
-   (GET "/graph.json" []
+   (GET "/relation/graph" []
      :query-params [relation-type :- String]
                     ; taxonomy :- String]
      :responses {200 {:schema s/Any}
@@ -74,6 +74,15 @@
                  500 {:schema {:type s/Str, :message s/Str}}}
      :summary "Relation graphs."
      (let [result (get-relation-graph (keyword relation-type))] ; (keyword taxonomy)
+       (if (not-empty result)
+         (response/ok result)
+         (response/not-found {:reason :NOT_FOUND}))))
+
+   (GET "/relation/types" []
+     :responses {200 {:schema s/Any}
+                 500 {:schema {:type s/Str, :message s/Str}}}
+     :summary "Relation graphs."
+     (let [result (get-relation-types)]
        (if (not-empty result)
          (response/ok result)
          (response/not-found {:reason :NOT_FOUND}))))
