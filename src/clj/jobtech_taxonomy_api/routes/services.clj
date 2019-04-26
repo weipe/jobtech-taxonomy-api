@@ -66,6 +66,18 @@
      :current-user user
      (response/ok {:user user}))
 
+   (GET "/graph.json" []
+     :query-params [relation-type :- String]
+                    ; taxonomy :- String]
+     :responses {200 {:schema s/Any}
+                 404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                 500 {:schema {:type s/Str, :message s/Str}}}
+     :summary "Relation graphs."
+     (let [result (get-relation-graph (keyword relation-type))] ; (keyword taxonomy)
+       (if (not-empty result)
+         (response/ok result)
+         (response/not-found {:reason :NOT_FOUND}))))
+
    (context "/taxonomy/public-api" []
      :tags ["public"]
      :auth-rules authenticated?
