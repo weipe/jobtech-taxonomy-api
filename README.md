@@ -59,6 +59,12 @@ Then open the following URL in a web browser:
 
     curl -X GET -H  "api-key: 2f904e245c1f5" --header 'Accept: application/json' 'http://127.0.0.1:4444/taxonomy/public-api/term?term=Danska'
 
+
+## Graph viewer
+
+Load http://127.0.0.1:4444/graphview.html in your web browser.
+
+
 ## Testing
 
 There are two main test directories: test/ and integration-test/. The

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <link href="graphview.css" rel="stylesheet" type="text/css" media="all">
+    <script src="/js/d3.v3.min.js"></script>
+    <script>
+        function graphButton() {
+            var r = document.getElementById('relation-type'); 
+            var c = document.getElementById('opt-cached'); 
+            renderGraph(r.options[r.selectedIndex].value, c.checked)
+        }
+    </script>
+</head>
+<body>
+  <h1>Jobtech Taxonomy Viewer</h1>
+
+    <select id="relation-type" name="relation-type"></select>
+
+  <input id="Render" type="button" value="render" onclick="graphButton()" />
+  <input id="opt-cached" type="checkbox">cached</input>
+
+  <div id="elementSelector">
+    <div id="plot"></div>
+  </div>
+
+  <div id="loader" class="centered"><div id="loader-text" class="monospace">  </div><img src="/img/bitdance.gif" width="35%" height="35%"></img></div>
+
+  <script src="/js/dropdown.js"></script>
+  <script src="/js/graphview.js"></script>
+  <script src="/js/loader.js"></script>
+
+</body>

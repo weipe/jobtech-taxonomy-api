@@ -75,6 +75,75 @@
     {:msg (if retract "ok" "bad")}))
 
 
+(def get-relation-graph-query
+  '[:find ?c1id ?c2id
+    :in $ ?relation-type
+    :where
+    [?re :relation/type      ?relation-type]
+    [?re :relation/concept-1 ?c1]
+    [?re :relation/concept-2 ?c2]
+    [?c1 :concept/id ?c1id]
+    [?c2 :concept/id ?c2id]])
+
+
+(def map-id-to-term-query
+  '[:find ?term
+    :in $ ?id
+    :where
+    [?ce :concept/id ?id]
+    [?ce :concept/preferred-term ?te]
+    [?te :term/base-form ?term]])
+
+
+;; SLOW, memoryhungry - maybe because IDs are lost and overlapping occurs
+;; (def get-relation-graph-query
+;;   '[:find ?term1 ?term2
+;;     :in $ ?relation-type
+;;     :where
+;;     [?re :relation/type      ?relation-type]
+;;     [?re :relation/concept-1 ?c1]
+;;     [?re :relation/concept-2 ?c2]
+;;     [?c1 :concept/preferred-term ?c1tid]
+;;     [?c2 :concept/preferred-term ?c2tid]
+;;     [?c1tid :term/base-form ?term1]
+;;     [?c2tid :term/base-form ?term2]])
+
+
+(defn map-id-to-term [id]
+  (d/q map-id-to-term-query (get-db) id))
+
+
+(defn get-relation-graph [relation-type]
+  (letfn [(lazy-contains? [col key]
+            (some #{key} col))
+          (get-children [n all-pairs]
+            (flatten (map vals (filter #(contains? % n) all-pairs))))
+          (get-hier-rec [parent all-pairs]
+            (let [children (get-children parent all-pairs)
+                  term (map-id-to-term parent)]
+              (if (empty? children)
+                { "name" term, "size" 123 }
+                { "name" term, "children" (map #(get-hier-rec % all-pairs) children) })))]
+    (let [list (d/q get-relation-graph-query (get-db) relation-type)
+          map-key-val (map #(apply hash-map % ) list)
+          map-val-key (map #(apply hash-map (reverse %) ) list)
+          tops (->> (map #(first (keys %)) map-key-val)
+                    (filter #(not (lazy-contains? map-val-key %)) ,,,)
+                    (distinct ,,,))]
+      { "name" "Jobtech", "children" (map #(get-hier-rec % map-key-val) tops) })))
+
+
+;; (get-relation-graph :main-headline-to-headline)
+
+
+(def get-relation-types-query
+  '[:find ?v :where [_ :relation/type ?v]])
+
+
+(defn get-relation-types []
+  (->> (d/q get-relation-types-query (get-db))
+       (sort-by first)
+       (apply concat)))
 
 ;; TODO appeda pa replaced by listan
 
