@@ -104,9 +104,14 @@
 
      (GET "/term-part" []
        :query-params [term :- String]
+       :responses {200 {:schema get-concepts-by-term-start-schema}
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "get concepts by part of string"
-       ;;:return       find-concept-by-preferred-term-schema
-       {:body (take 10 (get-concepts-by-term-start term))})
+       (let [result (take 10 (get-concepts-by-term-start term))]
+         (if (not-empty result)
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND}))))
 
 ;; Jag tog bort den eftersom den tar 15 sekunder att köra. Vi får hitta något annat sätt att dumpa databasen på.
 
