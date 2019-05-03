@@ -289,9 +289,9 @@
          :preferred-term (get (get concept :preferred-term) :term/base-form)))
 
 (defn get-concepts-by-term-start [letter]
-  (map #(lift-term %)
-       (concept-name-simplificator
-        (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))))
+  (->> (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter))
+       (concept-name-simplificator)
+       (map #(lift-term %))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
