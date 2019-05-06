@@ -87,7 +87,7 @@
          (response/ok result)
          (response/not-found {:reason :NOT_FOUND}))))
 
-   (context "/taxonomy/public-api" []
+   (context "/taxonomy/public" []
      :tags ["public"]
      :auth-rules authenticated?
 
@@ -115,7 +115,7 @@
 
 ;; Jag tog bort den eftersom den tar 15 sekunder att köra. Vi får hitta något annat sätt att dumpa databasen på.
 
-     #_(GET "/full-history" []
+     (GET "/full-history" []
        :query-params []
        :responses {200 {:schema show-concept-events-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
@@ -146,7 +146,7 @@
            (response/ok result)
            (response/not-found {:reason :NOT_FOUND})))))
 
-   (context "/taxonomy/private-api" []
+   (context "/taxonomy/private" []
      :tags ["private"]
             ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
      :auth-rules {:and [authenticated? authorized-private?]}
