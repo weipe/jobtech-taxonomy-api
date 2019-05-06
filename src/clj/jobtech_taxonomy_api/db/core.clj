@@ -38,14 +38,13 @@
 (def find-concept-by-preferred-term-schema
   "The response schema for the query below."
   [{:id s/Str
-    :description s/Str
-    :category s/Keyword
+    :definition s/Str
+    :instanceType s/Str
     (s/optional-key :deprecated) s/Bool}])
 
-(defn concept-name-simplificator [concept]
-  "Rename the keys to exclude the concept/-part."
-  (map #(set/rename-keys (first %) {:concept/preferred-term :preferred-term, :concept/id :id, :concept/description :description, :concept/category :category :concept/deprecated :deprecated})
-       concept))
+(defn rename-concept-keys-for-api [concept]
+  (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :instanceType :concept/deprecated :deprecated}))
+
 
 (defn find-concept-by-preferred-term [term]
   "Lookup concepts by term. Special term '___THROW_EXCEPTION' throws an exception, handy for testning error handling."
@@ -278,20 +277,24 @@
 (def get-concepts-by-term-start-schema
   "The response schema for the query below."
   [{:id s/Str
-    :description s/Str
-    :category s/Keyword
-    (s/optional-key :preferred-term) s/Str
+    :definition s/Str
+    :instanceType s/Str
+    (s/optional-key :preferredLabel) s/Str
     (s/optional-key :deprecated) s/Bool}])
 
 
 (defn lift-term [concept]
   (assoc (dissoc concept :preferred-term)
-         :preferred-term (get (get concept :preferred-term) :term/base-form)))
+         :concept/preferred-term (get-in concept [:concept/preferred-term :term/base-form] )))
 
 (defn get-concepts-by-term-start [letter]
   (->> (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter))
-       (concept-name-simplificator)
-       (map #(lift-term %))))
+       (map first)
+       (map #(lift-term %))
+       (map #(update % :concept/category name))
+       (map rename-concept-keys-for-api)
+       )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

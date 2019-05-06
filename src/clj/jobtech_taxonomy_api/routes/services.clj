@@ -144,12 +144,8 @@
        (let [result (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))]
          (if (not (empty? result))
            (response/ok result)
-           (response/not-found {:reason :NOT_FOUND})))))
+           (response/not-found {:reason :NOT_FOUND}))))
 
-   (context "/taxonomy/private" []
-     :tags ["private"]
-            ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
-     :auth-rules {:and [authenticated? authorized-private?]}
 
      (GET "/concept"    []
        :query-params [id :- String]
@@ -165,6 +161,16 @@
        :query-params [type :- String]
        :summary      "Read all concepts of the given type."
        {:body (get-concepts-for-type type)})
+
+     )
+
+
+
+   (context "/taxonomy/private" []
+     :tags ["private"]
+            ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
+     :auth-rules {:and [authenticated? authorized-private?]}
+
 
      (DELETE "/concept"    []
        :query-params [id :- String]
