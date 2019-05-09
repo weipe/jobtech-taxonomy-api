@@ -51,8 +51,8 @@
   {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
   (if (= term "___THROW_EXCEPTION")
     (throw (NullPointerException. "Throwing test exception.")))
-  (rename-concept-keys-for-api
-   (d/q find-concept-by-preferred-term-query (get-db) term)))
+  (rename-concept-keys-for-api (ffirst
+                                (d/q find-concept-by-preferred-term-query (get-db) term))))
 
 (def find-concept-by-id-query
   '[:find (pull ?c
