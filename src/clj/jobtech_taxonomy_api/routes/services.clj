@@ -93,7 +93,7 @@
 
      (GET "/term" []
        :query-params [term :- String]
-       :responses {200 {:schema find-concept-by-preferred-term-schema}
+       :responses {200 {:schema get-concepts-by-term-start-schema}
                    404 {:schema {:reason (s/enum :NOT_FOUND)}}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Search for a term across all taxonomies."

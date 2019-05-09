@@ -26,11 +26,13 @@
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
 
 (def find-concept-by-preferred-term-query
-  '[:find (pull ?c
-                [:concept/id
-                 :concept/description
-                 :concept/category
-                 :concept/deprecated])
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
     :in $ ?term
     :where [?t :term/base-form ?term]
     [?c :concept/preferred-term ?t]])
@@ -45,13 +47,28 @@
 (defn rename-concept-keys-for-api [concept]
   (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :instanceType :concept/deprecated :deprecated}))
 
+(defn lift-term [concept]
+  (assoc (dissoc concept :preferred-term)
+         :concept/preferred-term (get-in concept [:concept/preferred-term :term/base-form] )))
+
+(defn parse-find-concept-datomic-result [result]
+  (->> result
+       (map first)
+       (map #(lift-term %))
+       (map #(update % :concept/category name))
+       (map rename-concept-keys-for-api)
+       )
+  )
 
 (defn find-concept-by-preferred-term [term]
   "Lookup concepts by term. Special term '___THROW_EXCEPTION' throws an exception, handy for testning error handling."
   {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
   (if (= term "___THROW_EXCEPTION")
     (throw (NullPointerException. "Throwing test exception.")))
-  (rename-concept-keys-for-api (update (ffirst (d/q find-concept-by-preferred-term-query (get-db) term))  :concept/category name   )  ))
+  (let [result (d/q find-concept-by-preferred-term-query (get-db) term)]
+    (parse-find-concept-datomic-result result)
+    )
+  )
 
 (def find-concept-by-id-query
   '[:find (pull ?c
@@ -258,15 +275,17 @@
 (defn ignore-case [string]
   (str "(?i:.*" string  ".*)"))
 
+
+
+
 (def find-concepts-by-term-start-query
-  '[:find (pull ?c
-                [:concept/id
-                 :concept/description
-                 :concept/category
-                 :concept/deprecated
-                 {:concept/preferred-term [:term/base-form]}
-                 {:concept/referring-terms [:term/base-form]}
-                 ])
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
     :in $ ?letter
     :where [?c :concept/preferred-term ?t]
     [?t :term/base-form ?term]
@@ -282,17 +301,12 @@
     (s/optional-key :deprecated) s/Bool}])
 
 
-(defn lift-term [concept]
-  (assoc (dissoc concept :preferred-term)
-         :concept/preferred-term (get-in concept [:concept/preferred-term :term/base-form] )))
+
+
+
 
 (defn get-concepts-by-term-start [letter]
-  (->> (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter))
-       (map first)
-       (map #(lift-term %))
-       (map #(update % :concept/category name))
-       (map rename-concept-keys-for-api)
-       )
+  (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
