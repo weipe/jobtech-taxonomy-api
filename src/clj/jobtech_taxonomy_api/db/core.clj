@@ -37,10 +37,10 @@
 
 (def find-concept-by-preferred-term-schema
   "The response schema for the query below."
-  [{:id s/Str
-    :definition s/Str
-    :instanceType s/Str
-    (s/optional-key :deprecated) s/Bool}])
+  {:id s/Str
+   :definition s/Str
+   :instanceType s/Str
+   (s/optional-key :deprecated) s/Bool})
 
 (defn rename-concept-keys-for-api [concept]
   (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :instanceType :concept/deprecated :deprecated}))
@@ -51,8 +51,7 @@
   {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
   (if (= term "___THROW_EXCEPTION")
     (throw (NullPointerException. "Throwing test exception.")))
-  (rename-concept-keys-for-api (ffirst
-                                (d/q find-concept-by-preferred-term-query (get-db) term))))
+  (rename-concept-keys-for-api (update (ffirst (d/q find-concept-by-preferred-term-query (get-db) term))  :concept/category name   )  ))
 
 (def find-concept-by-id-query
   '[:find (pull ?c
