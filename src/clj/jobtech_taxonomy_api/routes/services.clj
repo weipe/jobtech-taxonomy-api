@@ -141,12 +141,10 @@
        :summary      "Show the complete history."
        (response/ok (show-concept-events)))
 
-
-
      (GET "/changes" []
        :query-params [fromDateTime :- String
-                      {offset       :- Integer 0}
-                      {limit        :- Integer 0}]
+                      {offset       :- String ""}
+                      {limit        :- String ""}]
        :responses {200 {:schema show-changes-schema}
                    404 {:schema {:reason (s/enum :NOT_FOUND)}}
                    500 {:schema {:type s/Str, :message s/Str}}}
