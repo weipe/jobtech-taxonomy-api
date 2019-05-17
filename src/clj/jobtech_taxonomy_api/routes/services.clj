@@ -143,6 +143,20 @@
 
 
 
+     (GET "/changes" []
+       :query-params [fromDateTime :- String
+                      {offset       :- Integer 0}
+                      {limit        :- Integer 0}]
+       :responses {200 {:schema show-changes-schema}
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
+       (let [result (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)]
+         (if (not (empty? result))
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND}))))
+
+
      (GET "/concept-history-since" []
        :query-params [date-time :- String]
        :responses {200 {:schema show-concept-events-schema}

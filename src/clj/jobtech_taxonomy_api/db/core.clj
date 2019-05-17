@@ -250,11 +250,24 @@
     (s/optional-key :new-preferred-term) s/Str
     (s/optional-key :deprecated) s/Bool}])
 
+(def show-changes-schema
+  "The response schema for /changes."
+  [{:event-type s/Str
+    :transaction-id s/Int
+    :timestamp java.util.Date
+    :concept { :concept-id s/Str
+                 :category s/Keyword
+                 (s/optional-key :preferred-term) s/Str }}])
+
 (defn show-concept-events []
   (get-all-events (get-db)))
 
 (defn show-concept-events-since [date-time]
   (get-all-events-since (get-db) date-time))
+
+(defn show-changes-since [date-time offset limit]
+  "Show changes since a specific time. Part of API v0.9."
+  (get-all-events-since-v0-9 (get-db) date-time offset limit))
 
 (defn show-deprecated-concepts-and-replaced-by [date-time]
   (get-deprecated-concepts-replaced-by-since (get-db) date-time))
