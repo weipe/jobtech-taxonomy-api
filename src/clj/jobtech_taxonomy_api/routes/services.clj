@@ -54,19 +54,26 @@
    {:exceptions
     {:handlers
      {::ex/default (custom-handler response/internal-server-error :fatal)}}
-    :swagger {:ui "/taxonomy/swagger-ui"
-              :spec "/taxonomy/swagger.json"
-              :data {:info {:version "1.0.0"
+    :swagger {:ui "/v0/taxonomy/swagger-ui"
+              :spec "/v0/taxonomy/swagger.json"
+              :data {:info {:version "0.9.0"
                             :title "Jobtech Taxonomy"
                             :description "Jobtech taxonomy services"}
                      ;; API header config found here: https://gist.github.com/Deraen/ef7f65d7ec26f048e2bb
                      :securityDefinitions {:api_key {:type "apiKey" :name "api-key" :in "header"}}}}}
 
-   (GET "/authenticated" []
+   #_(GET "/authenticated" []
      :current-user user
      (response/ok {:user user}))
 
-   (GET "/relation/graph/:relation-type" []
+
+   (context "/v0/taxonomy/public" []
+     :tags ["public"]
+     :auth-rules authenticated?
+
+
+
+ (GET "/relation/graph/:relation-type" []
      :path-params [relation-type :- String]
      :responses {200 {:schema s/Any}
                  404 {:schema {:reason (s/enum :NOT_FOUND)}}
@@ -98,9 +105,10 @@
          (response/ok result)
          (response/not-found {:reason :NOT_FOUND}))))
 
-   (context "/taxonomy/public" []
-     :tags ["public"]
-     :auth-rules authenticated?
+
+
+
+
 
      (GET "/term" []
        :query-params [term :- String]
@@ -177,7 +185,7 @@
 
 
 
-   (context "/taxonomy/private" []
+   (context "/v0/taxonomy/private" []
      :tags ["private"]
             ;;:auth-rules {:or [swagger-ui-user? (fn [req] (and (authenticated? req) (authorized-private? req)))]}
      :auth-rules {:and [authenticated? authorized-private?]}
