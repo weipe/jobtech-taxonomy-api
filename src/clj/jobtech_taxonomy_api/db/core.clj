@@ -45,7 +45,7 @@
    (s/optional-key :deprecated) s/Bool})
 
 (defn rename-concept-keys-for-api [concept]
-  (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :instanceType :concept/deprecated :deprecated}))
+  (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :type :concept/deprecated :deprecated}))
 
 (defn lift-term [concept]
   (assoc (dissoc concept :preferred-term)
@@ -321,7 +321,7 @@
   "The response schema for the query below."
   [{:id s/Str
     :definition s/Str
-    :instanceType s/Str
+    :type s/Str
     (s/optional-key :preferredLabel) s/Str
     (s/optional-key :deprecated) s/Bool}])
 
@@ -338,8 +338,9 @@
 (def get-concepts-by-term-start-schema
   "The response schema for the query below. Beta for v0.9."
   [{:id s/Str
+    :definition s/Str
     :preferredLabel s/Str
-    :type s/Keyword}])
+    :type s/Str}])
 
 
 (defn get-concepts-by-search [q type offset limit]

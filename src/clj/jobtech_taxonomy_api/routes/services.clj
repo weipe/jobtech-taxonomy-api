@@ -71,6 +71,48 @@
      :tags ["public"]
      :auth-rules authenticated?
 
+     (GET "/changes" []
+       :query-params [fromDateTime :- String
+                      {offset       :- Long 0}
+                      {limit        :- Long 0}]
+       :responses {200 {:schema show-changes-schema}
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
+       (let [result (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)]
+         (if (not (empty? result))
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND}))))
+
+
+     (GET "/concepts"    []
+       :query-params [{id :- String ""}
+                      {preferredLabel :- String ""}
+                      {type :- String ""}
+                      {offset :- Long 0}
+                      {limit :- Long 0}]
+       :responses {200 {:schema find-concepts-schema}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "Get concepts."
+       (let [result (find-concepts id preferredLabel type offset limit)]
+         (response/ok result)))
+
+     (GET "/search" []
+       :query-params [q       :- String
+                      {type   :- String ""}
+                      {offset :- Long 0}
+                      {limit  :- Long 0}]
+       :responses {200 {:schema get-concepts-by-term-start-schema}
+                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "get concepts by part of string"
+       (let [result (take 10 (get-concepts-by-search q type offset limit))]
+         (if (not-empty result)
+           (response/ok result)
+           (response/not-found {:reason :NOT_FOUND}))))
+
+
+
 
 
  (GET "/relation/graph/:relation-type" []
@@ -132,19 +174,7 @@
            (response/ok result)
            (response/not-found {:reason :NOT_FOUND}))))
 
-     (GET "/search" []
-       :query-params [q       :- String
-                      {type   :- String ""}
-                      {offset :- Long 0}
-                      {limit  :- Long 0}]
-       :responses {200 {:schema get-concepts-by-term-start-schema}
-                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "get concepts by part of string"
-       (let [result (take 10 (get-concepts-by-search q type offset limit))]
-         (if (not-empty result)
-           (response/ok result)
-           (response/not-found {:reason :NOT_FOUND}))))
+
 
      (GET "/full-history" []
        :query-params []
@@ -153,18 +183,7 @@
        :summary      "Show the complete history."
        (response/ok (show-concept-events)))
 
-     (GET "/changes" []
-       :query-params [fromDateTime :- String
-                      {offset       :- Long 0}
-                      {limit        :- Long 0}]
-       :responses {200 {:schema show-changes-schema}
-                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (let [result (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)]
-         (if (not (empty? result))
-           (response/ok result)
-           (response/not-found {:reason :NOT_FOUND}))))
+
 
 
      (GET "/concept-history-since" []
@@ -189,17 +208,7 @@
            (response/ok result)
            (response/not-found {:reason :NOT_FOUND}))))
 
-     (GET "/concepts"    []
-       :query-params [{id :- String ""}
-                      {preferredLabel :- String ""}
-                      {type :- String ""}
-                      {offset :- Long 0}
-                      {limit :- Long 0}]
-       :responses {200 {:schema find-concepts-schema}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Get concepts."
-       (let [result (find-concepts id preferredLabel type offset limit)]
-         (response/ok result)))
+
 
      (GET "/concept"    []
        :query-params [id :- String]
