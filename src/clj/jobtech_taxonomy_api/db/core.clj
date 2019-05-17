@@ -83,12 +83,13 @@
   (d/q find-concept-by-id-query (get-db) id))
 
 (def find-concepts-schema
-  "The response schema for /concepts."
+  "The response schema for /concepts. Beta for v0.9."
     [{ :id s/Str
        :type s/Keyword
        :preferredLabel s/Str }])
 
 (defn find-concepts [id preferred-label type offset limit]
+  "Beta for v0.9."
   '({ :id "Vpaw_yX7_BNY",
       :preferredLabel "Sportdykning",
       :type :skill }))
@@ -262,13 +263,13 @@
     (s/optional-key :deprecated) s/Bool}])
 
 (def show-changes-schema
-  "The response schema for /changes."
+  "The response schema for /changes. Beta for v0.9."
   [{:event-type s/Str
     :transaction-id s/Int
     :timestamp java.util.Date
-    :concept { :concept-id s/Str
-                 :category s/Keyword
-                 (s/optional-key :preferred-term) s/Str }}])
+    :concept { :id s/Str
+              :type s/Keyword
+              (s/optional-key :preferredLabel) s/Str }}])
 
 (defn show-concept-events []
   (get-all-events (get-db)))
@@ -277,7 +278,7 @@
   (get-all-events-since (get-db) date-time))
 
 (defn show-changes-since [date-time offset limit]
-  "Show changes since a specific time. Part of API v0.9."
+  "Show changes since a specific time. Beta for v0.9."
   (get-all-events-since-v0-9 (get-db) date-time offset limit))
 
 (defn show-deprecated-concepts-and-replaced-by [date-time]
@@ -335,16 +336,17 @@
 
 
 (def get-concepts-by-term-start-schema
-  "The response schema for the query below."
+  "The response schema for the query below. Beta for v0.9."
   [{:id s/Str
-    :preferred-term s/Str
-    :category s/Keyword}])
+    :preferredLabel s/Str
+    :type s/Keyword}])
 
 
 (defn get-concepts-by-search [q type offset limit]
+  "Beta for v0.9."
   '({ :id "Vpaw_yX7_BNY"
-      :preferred-term "Sportdykning"
-      :category :skill }))
+      :preferredLabel "Sportdykning"
+      :type :skill }))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

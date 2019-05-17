@@ -160,9 +160,10 @@ Like replaced-by will return nil."
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
 
 (defn get-all-events-since-v0-9 [db date-time offset limit]
+  "Beta for v0.9."
   '({:event-type "CREATED",
      :transaction-id 13194139534315,
      :timestamp #inst "2019-05-16T13:55:40.451-00:00",
-     :concept { :concept-id "Vpaw_yX7_BNY",
-               :preferred-term "Sportdykning",
-               :category :skill }}))
+     :concept { :id "Vpaw_yX7_BNY",
+               :preferredLabel "Sportdykning",
+               :type :skill }}))
