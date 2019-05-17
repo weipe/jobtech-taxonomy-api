@@ -291,9 +291,6 @@
 (defn ignore-case [string]
   (str "(?i:.*" string  ".*)"))
 
-
-
-
 (def find-concepts-by-term-start-query
   '[:find (pull ?c [:concept/id
                     :concept/description
@@ -324,6 +321,20 @@
 (defn get-concepts-by-term-start [letter]
   (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
   )
+
+
+(def get-concepts-by-term-start-schema
+  "The response schema for the query below."
+  [{:id s/Str
+    :preferred-term s/Str
+    :category s/Keyword}])
+
+
+(defn get-concepts-by-search [q type offset limit]
+  '({ :id "Vpaw_yX7_BNY"
+      :preferred-term "Sportdykning"
+      :category :skill }))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
