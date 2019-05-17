@@ -135,8 +135,8 @@
      (GET "/search" []
        :query-params [q       :- String
                       {type   :- String ""}
-                      {offset :- String ""}
-                      {limit  :- String ""}]
+                      {offset :- Long 0}
+                      {limit  :- Long 0}]
        :responses {200 {:schema get-concepts-by-term-start-schema}
                    404 {:schema {:reason (s/enum :NOT_FOUND)}}
                    500 {:schema {:type s/Str, :message s/Str}}}
@@ -155,8 +155,8 @@
 
      (GET "/changes" []
        :query-params [fromDateTime :- String
-                      {offset       :- String ""}
-                      {limit        :- String ""}]
+                      {offset       :- Long 0}
+                      {limit        :- Long 0}]
        :responses {200 {:schema show-changes-schema}
                    404 {:schema {:reason (s/enum :NOT_FOUND)}}
                    500 {:schema {:type s/Str, :message s/Str}}}
@@ -193,8 +193,8 @@
        :query-params [{id :- String ""}
                       {preferredLabel :- String ""}
                       {type :- String ""}
-                      {offset :- String ""}
-                      {limit :- String ""}]
+                      {offset :- Long 0}
+                      {limit :- Long 0}]
        :responses {200 {:schema find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."

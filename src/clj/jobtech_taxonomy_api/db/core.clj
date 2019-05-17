@@ -264,8 +264,8 @@
 
 (def show-changes-schema
   "The response schema for /changes. Beta for v0.9."
-  [{:event-type s/Str
-    :transaction-id s/Int
+  [{:eventType s/Str
+    :transactionId s/Int
     :timestamp java.util.Date
     :concept { :id s/Str
               :type s/Keyword
