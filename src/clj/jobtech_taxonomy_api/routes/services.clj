@@ -189,6 +189,17 @@
            (response/ok result)
            (response/not-found {:reason :NOT_FOUND}))))
 
+     (GET "/concepts"    []
+       :query-params [{id :- String ""}
+                      {preferredLabel :- String ""}
+                      {type :- String ""}
+                      {offset :- String ""}
+                      {limit :- String ""}]
+       :responses {200 {:schema find-concepts-schema}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary      "Get concepts."
+       (let [result (find-concepts id preferredLabel type offset limit)]
+         (response/ok result)))
 
      (GET "/concept"    []
        :query-params [id :- String]

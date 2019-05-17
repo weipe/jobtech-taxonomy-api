@@ -82,6 +82,17 @@
 (defn find-concept-by-id [id]
   (d/q find-concept-by-id-query (get-db) id))
 
+(def find-concepts-schema
+  "The response schema for /concepts."
+    [{ :id s/Str
+       :type s/Keyword
+       :preferredLabel s/Str }])
+
+(defn find-concepts [id preferred-label type offset limit]
+  '({ :id "Vpaw_yX7_BNY",
+      :preferredLabel "Sportdykning",
+      :type :skill }))
+
 (defn retract-concept [id]
   (let [retract (d/transact (get-conn) {:tx-data
                                         [{:concept/id id
