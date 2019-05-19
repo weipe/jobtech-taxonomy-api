@@ -88,7 +88,7 @@
        :type s/Keyword
        :preferredLabel s/Str }])
 
-(defn find-concepts [id preferred-label type offset limit]
+#_(defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
   '({ :id "Vpaw_yX7_BNY",
       :preferredLabel "Sportdykning",
@@ -346,8 +346,183 @@
 (defn get-concepts-by-search [q type offset limit]
   "Beta for v0.9."
   '({ :id "Vpaw_yX7_BNY"
-      :preferredLabel "Sportdykning"
-      :type :skill }))
+     :preferredLabel "Sportdykning"
+     :type :skill }))
+
+
+(comment
+  (defn get-concepts [id label type]
+
+    cond  iff id
+
+
+    )
+
+  )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+(def fetch-concepts-by-preferred-term-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?term
+    :where [?t :term/base-form ?term]
+    [?c :concept/preferred-term ?t]])
+
+(def fetch-concepts-by-id-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?id
+    :where
+    [?c :concept/id ?id]])
+
+(def fetch-concepts-by-preferred-label-type-deprecated-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?label ?type ?deprecated
+    :where
+    [?c :concept/preferred-term ?pt]
+    [?pt :term/base-form ?label]
+    [?c :concept/category ?type]
+    [?c :concept/deprecated ?deprecated]
+    ])
+
+
+(def fetch-concepts-by-preferred-label-type-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?label ?type
+    :where
+    [?c :concept/preferred-term ?pt]
+    [?pt :term/base-form ?label]
+    [?c :concept/category ?type]
+    ])
+
+(def fetch-concepts-by-preferred-label-deprecated-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?label ?deprecated
+    :where
+    [?c :concept/preferred-term ?pt]
+    [?pt :term/base-form ?label]
+    [?c :concept/deprecated ?deprecated]
+    ])
+
+(def fetch-concepts-by-type-deprecated-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?type ?deprecated
+    :where
+    [?c :concept/category ?type]
+    [?c :concept/deprecated ?deprecated]
+    ])
+
+(def fetch-concepts-by-type-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?type
+    :where
+    [?c :concept/category ?type]
+    ])
+
+(def fetch-concepts-by-preferred-label-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?label
+    :where
+    [?c :concept/preferred-term ?pt]
+    [?pt :term/base-form ?label]
+    ])
+
+(def fetch-concepts-by-deprecated-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?deprecated
+    :where
+    [?c :concept/deprecated ?deprecated]
+    ])
+
+
+(defn fetch-concepts-choose-query [id preferred-label type deprecated]
+  (cond
+    id (d/q  fetch-concepts-by-id-query (get-db) id )
+    (and preferred-label type deprecated) (d/q fetch-concepts-by-preferred-label-type-deprecated-query (get-db) preferred-label type deprecated)
+    (and preferred-label type) (d/q fetch-concepts-by-preferred-label-type-query (get-db) preferred-label type )
+    (and preferred-label deprecated) (d/q fetch-concepts-by-preferred-label-deprecated-query (get-db) preferred-label deprecated )
+    (and type deprecated) (d/q fetch-concepts-by-type-deprecated-query (get-db) type deprecated )
+    preferred-label (d/q fetch-concepts-by-preferred-label-query (get-db) preferred-label)
+    type (d/q fetch-concepts-by-type-query (get-db) type)
+    deprecated (d/q fetch-concepts-by-deprecated-query (get-db) deprecated)
+    :else "error"
+    )
+  )
+
+(defmacro pagination
+  "Pagination mimicking the MySql LIMIT"
+  ([coll start-from quantity]
+   `(take ~quantity (drop ~start-from ~coll)))
+  ([coll quantity]
+   `(pagination ~coll 0 ~quantity)))
+
+(defn find-concepts [id preferred-label type deprecated offset limit]
+  "Beta for v0.9."
+  (let [result (fetch-concepts-choose-query id preferred-label type deprecated)]
+    (cond
+      (and offset limit) (pagination result offset limit)
+      offset (drop offset result)
+      limit (take limit result)
+      :else "error"
+      )
+    )
+  )
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

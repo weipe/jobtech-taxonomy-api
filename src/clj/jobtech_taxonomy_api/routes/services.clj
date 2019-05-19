@@ -97,7 +97,7 @@
        :responses {200 {:schema find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
-       (let [result (find-concepts id preferredLabel type offset limit)]
+       (let [result (find-concepts id preferredLabel type deprecated offset limit)]
          (response/ok result)))
 
      (GET "/search" []
