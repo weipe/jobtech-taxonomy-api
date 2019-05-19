@@ -318,6 +318,24 @@
     ;;[(.startsWith ^String ?term ?letter)]
     [(.matches ^String ?term ?letter)]])
 
+
+
+(def find-concepts-by-term-start-type-query
+  '[:find (pull ?c [:concept/id
+                    :concept/description
+                    :concept/category
+                    :concept/deprecated
+                    {:concept/preferred-term [:term/base-form]}
+                    {:concept/referring-terms [:term/base-form]}
+                    ] )
+    :in $ ?letter ?type
+    :where
+    [?c :concept/category ?type]
+    [?c :concept/preferred-term ?t]
+    [?t :term/base-form ?term]
+    [(.matches ^String ?term ?letter)]])
+
+
 (def get-concepts-by-term-start-schema
   "The response schema for the query below."
   [{:id s/Str
@@ -335,8 +353,12 @@
   (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
   )
 
+(defn get-concepts-by-term-start-type [letter type]
+  (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-type-query (get-db) (ignore-case letter) type))
+  )
 
-(def get-concepts-by-term-start-schema
+
+#_(def get-concepts-by-term-start-schema
   "The response schema for the query below. Beta for v0.9."
   [{:id s/Str
     :definition s/Str
@@ -344,11 +366,12 @@
     :type s/Str}])
 
 
-(defn get-concepts-by-search [q type offset limit]
+#_(defn get-concepts-by-search [q type offset limit]
   "Beta for v0.9."
   '({ :id "Vpaw_yX7_BNY"
      :preferredLabel "Sportdykning"
      :type :skill }))
+
 
 
 (comment
@@ -521,6 +544,17 @@
   )
 
 
+
+(defn paginate-datomic-result [result offset limit]
+  (cond
+    (and (= 0 offset) (= 0 limit)) (pagination result 0 100)
+    (and offset limit) (pagination result offset limit)
+    offset (drop offset result)
+    limit (take limit result)
+    :else (pagination result 0 100)
+    )
+  )
+
 (defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
   (let [datomic-result (fetch-concepts-choose-query (empty-string-to-nil id)
@@ -529,15 +563,27 @@
                                             deprecated)
         result (parse-find-concept-datomic-result datomic-result)
         ]
-    (cond
-      (and (= 0 offset) (= 0 limit)) (pagination result 0 100)
-      (and offset limit) (pagination result offset limit)
-      offset (drop offset result)
-      limit (take limit result)
-      :else (pagination result 0 100)
-      )
+    (paginate-datomic-result result offset limit)
     )
   )
+
+
+
+;;;;;;;;;;; search
+
+
+(defn get-concepts-by-search [q type offset limit]
+  "Beta for v0.9."
+  (let [result (cond
+                         (and (empty-string-to-nil q) (empty-string-to-nil type)) (get-concepts-by-term-start-type q (keyword type))
+                         (empty-string-to-nil q) (get-concepts-by-term-start q)
+                         :else "error"
+                         )]
+    (paginate-datomic-result result offset limit)
+    )
+  )
+
+
 
 
 
