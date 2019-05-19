@@ -89,8 +89,11 @@
        :query-params [{id :- String ""}
                       {preferredLabel :- String ""}
                       {type :- String ""}
+                      {deprecated :- Boolean false}
                       {offset :- Long 0}
-                      {limit :- Long 0}]
+                      {limit :- Long 0}
+                      ]
+
        :responses {200 {:schema find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
