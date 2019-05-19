@@ -85,7 +85,8 @@
 (def find-concepts-schema
   "The response schema for /concepts. Beta for v0.9."
     [{ :id s/Str
-       :type s/Keyword
+       :type s/Str
+       :definition s/Str
        :preferredLabel s/Str }])
 
 #_(defn find-concepts [id preferred-label type deprecated offset limit]
@@ -522,10 +523,12 @@
 
 (defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
-  (let [result (fetch-concepts-choose-query (empty-string-to-nil id)
+  (let [datomic-result (fetch-concepts-choose-query (empty-string-to-nil id)
                                             (empty-string-to-nil preferred-label)
                                             (keyword (empty-string-to-nil type))
-                                            deprecated)]
+                                            deprecated)
+        result (parse-find-concept-datomic-result datomic-result)
+        ]
     (cond
       (and (= 0 offset) (= 0 limit)) (pagination result 0 100)
       (and offset limit) (pagination result offset limit)
