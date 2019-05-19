@@ -269,7 +269,7 @@
     :transactionId s/Int
     :timestamp java.util.Date
     :concept { :id s/Str
-              :type s/Keyword
+              :type s/Str
               (s/optional-key :preferredLabel) s/Str }}])
 
 (defn show-concept-events []
