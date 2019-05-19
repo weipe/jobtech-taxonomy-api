@@ -493,7 +493,7 @@
 (defn fetch-concepts-choose-query [id preferred-label type deprecated]
   (cond
     id (d/q  fetch-concepts-by-id-query (get-db) id )
-    (and preferred-label type deprecated) (d/q fetch-concepts-by-preferred-label-type-deprecated-query (get-db) preferred-label type deprecated)
+    (and preferred-label  type deprecated) (d/q fetch-concepts-by-preferred-label-type-deprecated-query (get-db) preferred-label type deprecated)
     (and preferred-label type) (d/q fetch-concepts-by-preferred-label-type-query (get-db) preferred-label type )
     (and preferred-label deprecated) (d/q fetch-concepts-by-preferred-label-deprecated-query (get-db) preferred-label deprecated )
     (and type deprecated) (d/q fetch-concepts-by-type-deprecated-query (get-db) type deprecated )
@@ -511,14 +511,27 @@
   ([coll quantity]
    `(pagination ~coll 0 ~quantity)))
 
+
+(defn empty-string-to-nil [string]
+  (if (seq string)
+    string
+    nil
+    )
+  )
+
+
 (defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
-  (let [result (fetch-concepts-choose-query id preferred-label type deprecated)]
+  (let [result (fetch-concepts-choose-query (empty-string-to-nil id)
+                                            (empty-string-to-nil preferred-label)
+                                            (keyword (empty-string-to-nil type))
+                                            deprecated)]
     (cond
+      (and (= 0 offset) (= 0 limit)) (pagination result 0 100)
       (and offset limit) (pagination result offset limit)
       offset (drop offset result)
       limit (take limit result)
-      :else "error"
+      :else (pagination result 0 100)
       )
     )
   )
