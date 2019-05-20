@@ -87,7 +87,10 @@
     [{ :id s/Str
        :type s/Str
        :definition s/Str
-       :preferredLabel s/Str }])
+       :preferredLabel s/Str
+       (s/optional-key :deprecated) s/Bool
+      }
+     ])
 
 #_(defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
