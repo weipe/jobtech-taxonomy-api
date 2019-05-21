@@ -220,7 +220,9 @@
 
      (GET "/concept/types"    []
        :query-params []
-       :summary      "Read a list of all taxonomy types."
+       :responses {200 {:schema [ s/Str ]}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Return a list of all taxonomy types."
        {:body (get-all-taxonomy-types)})
 
      (GET "/concept/all"    []

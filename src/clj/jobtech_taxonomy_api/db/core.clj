@@ -224,9 +224,11 @@
 (def get-all-taxonomy-types-query
   '[:find ?v :where [_ :concept/category ?v]])
 
-(defn get-all-taxonomy-types "" []
+(defn get-all-taxonomy-types "Return a list of taxonomy types." []
   (->> (d/q get-all-taxonomy-types-query (get-db))
-       (sort-by first)))
+       (sort-by first)
+       (flatten)
+       (map name)))
 
 (def show-term-history-query
   '[:find ?e ?aname ?v ?tx ?added
