@@ -313,13 +313,11 @@
   '[:find (pull ?c [:concept/id
                     :concept/description
                     :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
+                    {:concept/preferred-term [:term/base-form]}])
     :in $ ?letter
     :where [?c :concept/preferred-term ?t]
     [?t :term/base-form ?term]
+    (not [?c :concept/deprecated true])
     ;;[(.startsWith ^String ?term ?letter)]
     [(.matches ^String ?term ?letter)]])
 
@@ -329,15 +327,13 @@
   '[:find (pull ?c [:concept/id
                     :concept/description
                     :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
+                    {:concept/preferred-term [:term/base-form]}])
     :in $ ?letter ?type
     :where
     [?c :concept/category ?type]
     [?c :concept/preferred-term ?t]
     [?t :term/base-form ?term]
+    (not [?c :concept/deprecated true])
     [(.matches ^String ?term ?letter)]])
 
 
@@ -346,12 +342,7 @@
   [{:id s/Str
     :definition s/Str
     :type s/Str
-    (s/optional-key :preferredLabel) s/Str
-    (s/optional-key :deprecated) s/Bool}])
-
-
-
-
+    (s/optional-key :preferredLabel) s/Str}])
 
 
 (defn get-concepts-by-term-start [letter]
@@ -576,21 +567,13 @@
 
 ;;;;;;;;;;; search
 
-
 (defn get-concepts-by-search [q type offset limit]
   "Beta for v0.9."
-  (let [result (cond
-                         (and (empty-string-to-nil q) (empty-string-to-nil type)) (get-concepts-by-term-start-type q (keyword type))
-                         (empty-string-to-nil q) (get-concepts-by-term-start q)
-                         :else "error"
-                         )]
-    (paginate-datomic-result result offset limit)
-    )
-  )
-
-
-
-
+  (let [result (cond (and (empty-string-to-nil q) (empty-string-to-nil type))
+                     (get-concepts-by-term-start-type q (keyword type))
+                     (empty-string-to-nil q) (get-concepts-by-term-start q)
+                     :else "error" )]
+    (paginate-datomic-result result offset limit)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
