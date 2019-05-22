@@ -99,27 +99,6 @@
        :summary      "get concepts by part of string"
        (response/ok (get-concepts-by-search q type offset limit)))
 
-     (GET "/relation/graph/:relation-type" []
-       :path-params [relation-type :- String]
-       :responses {200 {:schema s/Any}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary "Relation graphs."
-       (response/ok (get-relation-graph (keyword relation-type))))
-
-     (GET "/relation/graph/:relation-type/:id" []
-       :path-params [relation-type :- String
-                     id :- String]
-       :responses {200 {:schema s/Any}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary "Relation graphs."
-       (response/ok (get-relation-graph-from-concept (keyword relation-type) id)))
-
-     (GET "/relation/types" []
-       :responses {200 {:schema s/Any}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary "Relation graphs."
-       (response/ok (get-relation-types)))
-
      (GET "/deprecated-concept-history-since" []
        :query-params [date-time :- String]
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
@@ -156,4 +135,25 @@
        :query-params [old-concept-id :- String
                       new-concept-id :- String]
        :summary      "Replace old concept with a new concept."
-       {:body (replace-deprecated-concept old-concept-id new-concept-id)}))))
+       {:body (replace-deprecated-concept old-concept-id new-concept-id)})
+
+          (GET "/relation/graph/:relation-type" []
+       :path-params [relation-type :- String]
+       :responses {200 {:schema s/Any}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Relation graphs."
+       (response/ok (get-relation-graph (keyword relation-type))))
+
+     (GET "/relation/graph/:relation-type/:id" []
+       :path-params [relation-type :- String
+                     id :- String]
+       :responses {200 {:schema s/Any}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Relation graphs."
+       (response/ok (get-relation-graph-from-concept (keyword relation-type) id)))
+
+     (GET "/relation/types" []
+       :responses {200 {:schema s/Any}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Relation graphs."
+       (response/ok (get-relation-types))))))
