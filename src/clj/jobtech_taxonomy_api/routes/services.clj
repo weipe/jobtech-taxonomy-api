@@ -120,38 +120,6 @@
        :summary "Relation graphs."
        (response/ok (get-relation-types)))
 
-     (GET "/term" []
-       :query-params [term :- String]
-       :responses {200 {:schema get-concepts-by-term-start-schema}
-                   404 {:schema {:reason (s/enum :NOT_FOUND)}}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary "Search for a term across all taxonomies."
-       (let [result (find-concept-by-preferred-term term)]
-         (if (not-empty result)
-           (response/ok result)
-           (response/not-found {:reason :NOT_FOUND}))))
-
-     (GET "/term-part" []
-       :query-params [term :- String]
-       :responses {200 {:schema get-concepts-by-term-start-schema}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "get concepts by part of string"
-       (response/ok (take 10 (get-concepts-by-term-start term))))
-
-     (GET "/full-history" []
-       :query-params []
-       :responses {200 {:schema show-concept-events-schema}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the complete history."
-       (response/ok (show-concept-events)))
-
-     (GET "/concept-history-since" []
-       :query-params [date-time :- String]
-       :responses {200 {:schema show-concept-events-schema}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (response/ok (show-concept-events-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))))
-
      (GET "/deprecated-concept-history-since" []
        :query-params [date-time :- String]
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
@@ -159,22 +127,12 @@
        :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
        (response/ok (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))))
 
-     (GET "/concept"    []
-       :query-params [id :- String]
-       :summary      "Read a concept by ID."
-       {:body (find-concept-by-id id)})
-
      (GET "/concept/types"    []
        :query-params []
        :responses {200 {:schema [ s/Str ]}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Return a list of all taxonomy types."
-       {:body (get-all-taxonomy-types)})
-
-     (GET "/concept/all"    []
-       :query-params [type :- String]
-       :summary      "Read all concepts of the given type."
-       {:body (get-concepts-for-type type)}))
+       {:body (get-all-taxonomy-types)}))
 
    (context "/v0/taxonomy/private" []
      :tags ["private"]
