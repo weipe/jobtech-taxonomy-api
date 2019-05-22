@@ -97,7 +97,7 @@
        :responses {200 {:schema get-concepts-by-term-start-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "get concepts by part of string"
-       (response/ok (take 10 (get-concepts-by-search q type offset limit))))
+       (response/ok (get-concepts-by-search q type offset limit)))
 
      (GET "/relation/graph/:relation-type" []
        :path-params [relation-type :- String]
