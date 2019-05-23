@@ -275,6 +275,7 @@
     :timestamp java.util.Date
     :concept { :id s/Str
               :type s/Str
+              (s/optional-key :deprecated) s/Bool
               (s/optional-key :preferredLabel) s/Str }}])
 
 (defn show-concept-events []
