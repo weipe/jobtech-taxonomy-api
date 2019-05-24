@@ -67,17 +67,9 @@ Load http://127.0.0.1:4444/graphview.html in your web browser.
 
 ## Testing
 
-There are two main test directories: test/ and integration-test/. The
-former is for unit tests and the latter for functional testing.
+To run the integration tests only, use
 
-Run the tests in test/ by
-
-    lein test
-
-Run all tests including the tests in integration-test/ by
-
-    lein with-profile integration-test test
-
+    lein kaocha --focus-meta integration
 
 ## License
 

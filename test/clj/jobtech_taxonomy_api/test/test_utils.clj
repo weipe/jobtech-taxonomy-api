@@ -3,6 +3,8 @@
             [muuntaja.core :as m]
             [ring.mock.request :refer :all]
             [jobtech-taxonomy-api.handler :refer :all]
+            [jobtech-taxonomy-api.config :refer :all]
+            [jobtech-taxonomy-api.db.database-connection :refer :all]
             [jobtech-taxonomy-api.middleware.formats :as formats]
             [jobtech-taxonomy-api.middleware :as middleware]
             [mount.core :as mount]))
@@ -13,7 +15,7 @@
 (defn fixture [already-run f]
   (if @already-run
     (do
-      (mount/start #'jobtech-taxonomy-api.db.core/conn
+      (mount/start #'jobtech-taxonomy-api.db.database-connection/conn
                    #'jobtech-taxonomy-api.config/env
                    #'jobtech-taxonomy-api.handler/app)
       (reset! already-run false)))
