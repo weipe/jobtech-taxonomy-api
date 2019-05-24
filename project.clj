@@ -22,6 +22,7 @@
                  [metosin/compojure-api "2.0.0-alpha28"]
                  [metosin/muuntaja "0.6.3"]
                  [metosin/ring-http-response "0.9.1"]
+                 [lambdaisland/kaocha "0.0-418"]
                  [mount "0.1.15"]
                  [nrepl "0.5.3"]
                  [org.clojure/clojure "1.10.0"]
@@ -52,7 +53,9 @@
             [lein-kibit "0.1.2"]
             [lein-cljfmt "0.6.3"]]
   :profiles
-  {:uberjar {:omit-source true
+  {
+   :kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]}
+   :uberjar {:omit-source true
              :aot :all
              :uberjar-name "jobtech-taxonomy-api.jar"
              :source-paths ["env/prod/clj"]
@@ -61,7 +64,6 @@
    :dev           [:project/dev :profiles/dev]
    :local         [:project/local :profiles/local]
    :test          [:project/test :profiles/test]
-   :integration-test  [:project/integration-test :profiles/integration-test]
 
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
@@ -89,20 +91,9 @@
                    :repl-options {:init-ns user}}
    :project/test {:jvm-opts ["-Dconf=test-config.edn"]
                   :resource-paths ["env/test/resources"]}
-
-   :project/integration-test {:jvm-opts ["-Dconf=test-config.edn"]
-                              :dependencies [[expound "0.7.2"]
-                                             [pjstadig/humane-test-output "0.9.0"]
-                                             [prone "1.6.1"]
-                                             [ring/ring-devel "1.7.1"]
-                                             [ring/ring-mock "0.3.2"]]
-                              :plugins      [[com.jakemccrary/lein-test-refresh "0.23.0"]]
-                              :source-paths ["env/integration-test/clj" "integration-test/clj"]
-                              :resource-paths ["env/integration-test/resources"]
-                              :test-paths ["integration-test/clj"]}
    :profiles/dev {}
    :profiles/local {}
    :profiles/test  {}
-   :profiles/integration-test  {}
    }
+  :aliases {"kaocha" ["with-profile" "+kaocha" "run" "-m" "kaocha.runner"]}
   )
