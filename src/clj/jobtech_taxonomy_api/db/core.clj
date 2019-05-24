@@ -6,10 +6,12 @@
    [clj-time.coerce :as c]
    [clj-time [format :as f]]
    [clojure.set :as set]
+   [clojure.string :only (join split)]
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
    [jobtech-taxonomy-database.nano-id :as nano]
-   [jobtech-taxonomy-api.db.events :refer :all]))
+   [jobtech-taxonomy-api.db.events :refer :all]
+               [ring.mock.request :refer :all]))
 
 #_(defstate conn
     :start (-> env :database-url d/connect)
@@ -628,3 +630,30 @@
 
 ;;  time datbase query  (time (get-all-events-since (get-db) #inst "2019-04-10"))
 ;; if you want to get less output do   (let [_ (time (get-all-events-since (get-db) #inst "2019-04-10" ))])
+
+;; (defn make-req [req [first & rest]]
+;;   (if (nil? first)
+;;     req
+;;     (make-req (header req (get first :key) (get first :val)) rest)))
+;;
+;; (defn make-request [method endpoint & {:keys [headers query-params]}]
+;;   (let [req (request method endpoint)
+;;         req-w-headers (if headers
+;;                         (make-req req headers)
+;;                         req)]
+;;     (if query-params
+;;       (query-string req-w-headers
+;;                     (clojure.string/join "&" (map #(clojure.string/join "=" (list (get % :key) (get % :val))) query-params)))
+;;       req-w-headers)))
+;;
+;; (defn send-request [method endpoint & {:keys [headers query-params]}]
+;;   (make-request method endpoint :headers headers, :query-params query-params))
+;;
+;; (defn y [method endpoint & {:keys [headers query-params]}]
+;;   (let [response (send-request method endpoint :headers headers, :query-params query-params)]
+;;     response))
+;;
+;; (y
+;;  :get "/v0/taxonomy/public/changes"
+;;  :headers [ { :key "api-key", :val "SSSS"} ]
+;;  :query-params [ {:key "fromDateTime", :val "2018-02-08 09:46:08"} { :key "x", :val "y" } ])
