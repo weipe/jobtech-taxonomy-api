@@ -9,21 +9,14 @@
    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
    [jobtech-taxonomy-database.nano-id :as nano]
-   [jobtech-taxonomy-api.db.events :refer :all]))
+   [jobtech-taxonomy-api.db.events :refer :all]
+   [jobtech-taxonomy-api.db.database-connection  :refer :all]
+   [jobtech-taxonomy-api.db.api-util :refer :all]
+   ))
 
 #_(defstate conn
     :start (-> env :database-url d/connect)
     :stop (-> conn .release))
-
-(defn get-client [] (d/client (:datomic-cfg env)))
-
-(defstate ^{:on-reload :noop} conn
-  :start (d/connect (get-client)  {:db-name (:datomic-name env)}))
-
-(defn get-db [] (d/db conn))
-
-(defn get-conn "" []
-  (d/connect (get-client)  {:db-name (:datomic-name env)}))
 
 (def find-concept-by-preferred-term-query
   '[:find (pull ?c [:concept/id
@@ -43,22 +36,6 @@
    :definition s/Str
    :instanceType s/Str
    (s/optional-key :deprecated) s/Bool})
-
-(defn rename-concept-keys-for-api [concept]
-  (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :type :concept/deprecated :deprecated}))
-
-(defn lift-term [concept]
-  (assoc (dissoc concept :preferred-term)
-         :concept/preferred-term (get-in concept [:concept/preferred-term :term/base-form] )))
-
-(defn parse-find-concept-datomic-result [result]
-  (->> result
-       (map first)
-       (map #(lift-term %))
-       (map #(update % :concept/category name))
-       (map rename-concept-keys-for-api)
-       )
-  )
 
 (defn find-concept-by-preferred-term [term]
   "Lookup concepts by term. Special term '___THROW_EXCEPTION' throws an exception, handy for testning error handling."
@@ -384,188 +361,6 @@
 
 
 
-
-(def fetch-concepts-by-preferred-term-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?term
-    :where [?t :term/base-form ?term]
-    [?c :concept/preferred-term ?t]])
-
-(def fetch-concepts-by-id-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?id
-    :where
-    [?c :concept/id ?id]])
-
-(def fetch-concepts-by-preferred-label-type-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label ?type ?deprecated
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    [?c :concept/category ?type]
-    [?c :concept/deprecated ?deprecated]
-    ])
-
-
-(def fetch-concepts-by-preferred-label-type-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label ?type
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    [?c :concept/category ?type]
-    ])
-
-(def fetch-concepts-by-preferred-label-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label ?deprecated
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    [?c :concept/deprecated ?deprecated]
-    ])
-
-(def fetch-concepts-by-type-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?type ?deprecated
-    :where
-    [?c :concept/category ?type]
-    [?c :concept/deprecated ?deprecated]
-    ])
-
-(def fetch-concepts-by-type-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?type
-    :where
-    [?c :concept/category ?type]
-    ])
-
-(def fetch-concepts-by-preferred-label-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    ])
-
-(def fetch-concepts-by-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?deprecated
-    :where
-    [?c :concept/deprecated ?deprecated]
-    ])
-
-
-(defn fetch-concepts-choose-query [id preferred-label type deprecated]
-  (cond
-    id (d/q  fetch-concepts-by-id-query (get-db) id )
-    (and preferred-label  type deprecated) (d/q fetch-concepts-by-preferred-label-type-deprecated-query (get-db) preferred-label type deprecated)
-    (and preferred-label type) (d/q fetch-concepts-by-preferred-label-type-query (get-db) preferred-label type )
-    (and preferred-label deprecated) (d/q fetch-concepts-by-preferred-label-deprecated-query (get-db) preferred-label deprecated )
-    (and type deprecated) (d/q fetch-concepts-by-type-deprecated-query (get-db) type deprecated )
-    preferred-label (d/q fetch-concepts-by-preferred-label-query (get-db) preferred-label)
-    type (d/q fetch-concepts-by-type-query (get-db) type)
-    deprecated (d/q fetch-concepts-by-deprecated-query (get-db) deprecated)
-    :else "error"
-    )
-  )
-
-(defmacro pagination
-  "Pagination mimicking the MySql LIMIT"
-  ([coll start-from quantity]
-   `(take ~quantity (drop ~start-from ~coll)))
-  ([coll quantity]
-   `(pagination ~coll 0 ~quantity)))
-
-
-(defn empty-string-to-nil [string]
-  (if (seq string)
-    string
-    nil
-    )
-  )
-
-
-
-(defn paginate-datomic-result [result offset limit]
-  (cond
-    (and (= 0 offset) (= 0 limit)) (pagination result 0 100)
-    (and offset limit) (pagination result offset limit)
-    offset (drop offset result)
-    limit (take limit result)
-    :else (pagination result 0 100)
-    )
-  )
-
-(defn find-concepts [id preferred-label type deprecated offset limit]
-  "Beta for v0.9."
-  (let [datomic-result (fetch-concepts-choose-query (empty-string-to-nil id)
-                                            (empty-string-to-nil preferred-label)
-                                            (keyword (empty-string-to-nil type))
-                                            deprecated)
-        result (parse-find-concept-datomic-result datomic-result)
-        ]
-    (paginate-datomic-result result offset limit)
-    )
-  )
-
-
-
 ;;;;;;;;;;; search
 
 (defn get-concepts-by-search [q type offset limit]
@@ -575,56 +370,3 @@
                      (empty-string-to-nil q) (get-concepts-by-term-start q)
                      :else "error" )]
     (paginate-datomic-result result offset limit)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;; DEBUG TOOLS ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-(defn stupid-debug
-  "The env/dev/resources/config.edn is not read when REPLing here, so
-  we just make an ugly hack to be able to get on."
-  []
-
-  (defn get-client [] (d/client {:server-type :peer-server
-                                 :access-key  "myaccesskey"
-                                 :secret      "mysecret"
-                                 :endpoint    "localhost:8998"}))
-
-  (defn get-conn "" []
-    (d/connect (get-client)  {:db-name "taxonomy_v13"}))
-
-  (def conn (get-conn))
-
-  (defn get-db [] (d/db conn))
-
-  (let [some-terms        [{:term/base-form "Kontaktmannaskap"}
-                           {:term/base-form "Fribrottare"}
-                           {:term/base-form "Begravningsentreprenör"}]
-
-        some-concepts     [{:concept/id "MZ6wMoAfyP"
-                            :concept/description "grotz"
-                            :concept/category :skill
-                            :concept/preferred-term [:term/base-form "Kontaktmannaskap"]
-                            :concept/alternative-terms #{[:term/base-form "Kontaktmannaskap"]}}
-                           {:concept/id "XYZYXYZYXYZ"
-                            :concept/description "Fribrottare"
-                            :concept/category :occupation
-                            :concept/preferred-term [:term/base-form "Fribrottare"]
-                            :concept/alternative-terms #{[:term/base-form "Fribrottare"]}}
-                           {:concept/id "ZZZZZZZZZZZ"
-                            :concept/description "Begravningsentreprenör"
-                            :concept/category :occupation
-                            :concept/preferred-term [:term/base-form "Begravningsentreprenör"]
-                            :concept/alternative-terms #{[:term/base-form "Begravningsentreprenör"]}}]]
-    (d/transact (get-conn) {:tx-data (vec (concat some-terms))})
-    (d/transact (get-conn) {:tx-data (vec (concat some-concepts))}))
-
-  (get-all-taxonomy-types)
-  (get-concepts-for-type :occupation)
-  (assert-concept "skill" "weqweqw" "fsdfsdfsd")
-;; (retract-concept "ZZZZZZZZZZZ")
-  )
-;; (stupid-debug)
-
-;;  time datbase query  (time (get-all-events-since (get-db) #inst "2019-04-10"))
-;; if you want to get less output do   (let [_ (time (get-all-events-since (get-db) #inst "2019-04-10" ))])

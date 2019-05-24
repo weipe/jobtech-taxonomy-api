@@ -14,6 +14,7 @@
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
    [jobtech-taxonomy-api.middleware :as middleware]
+   [jobtech-taxonomy-api.db.concepts :refer :all]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
