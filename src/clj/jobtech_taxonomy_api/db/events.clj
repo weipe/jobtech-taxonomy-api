@@ -1,6 +1,7 @@
 (ns jobtech-taxonomy-api.db.events
   (:require
    [datomic.client.api :as d]
+   [jobtech-taxonomy-api.config :refer [env]]
    [mount.core :refer [defstate]]))
 
 (def show-concept-history
@@ -23,13 +24,17 @@
     [?pft :term/base-form ?term]
     [?e :concept/id ?concept-id]
     [?e :concept/category ?cat]
-    [?e :concept/deprecated ?deprecated]
+    [(get-else $ ?e :concept/deprecated false) ?deprecated]
     [?e ?a ?v ?tx ?added]
     [?tx :db/txInstant ?inst]
     [(< ?since ?inst)]
     [?a :db/ident ?aname]
     ]
   )
+
+
+
+
 
 #_(def show-concept-history-since-transaction-query
   '[:find ?e ?aname ?v ?tx ?added ?concept-id ?term ?pft ?cat
@@ -49,12 +54,12 @@
 
 (def show-deprecated-replaced-by-query
   '[:find (pull ?c
-                [:concept/id
-                 :concept/description
-                 {:concept/preferred-term [:term/base-form]}
-                 {:concept/referring-terms [:term/base-form]}
-                 {:concept/replaced-by [:concept/id
-                                        {:concept/preferred-term [:term/base-form]}]}])
+                    [:concept/id
+                     :concept/description
+                     {:concept/preferred-term [:term/base-form]}
+                     {:concept/referring-terms [:term/base-form]}
+                     {:concept/replaced-by [:concept/id
+                                            {:concept/preferred-term [:term/base-form]}]}])
 
     ?inst
     :in $ ?since
