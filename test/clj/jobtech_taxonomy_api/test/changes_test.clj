@@ -6,71 +6,60 @@
 
 (def run-fixture? (atom true))
 
+
+(defn my-filtering-created-function [element]
+
+  ( = "CREATED" (:eventType element))
+
+  )
+
+
+(defn my-filtering-transactionid-function [element]
+
+  ( = "13194139533328" (:transactionId element))
+
+  )
+
+(defn my-filtering-deprecated-function [element]
+
+  ( = "DEPRECATED" (:eventType element))
+  )
+
 (test/use-fixtures :each (partial util/fixture run-fixture?))
 
 (test/deftest ^:integration changes-test-0
-  (test/testing "test event stream"
+  (test/testing "test event stream created"
     (let [[status body] (util/send-request-to-json-service
-                         :get "/v0/taxonomy/public/changes"
-                         :headers [util/header-auth-user]
-                         :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
-          an-event (first body)]
-      ;; (prn an-event)
-      (test/is (= "DEPRECATED" (:eventType an-event))))))
+                          :get "/v0/taxonomy/public/changes"
+                          :headers [util/header-auth-user]
+                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
+          ]
+      ( test/is (not (empty? (filter my-filtering-created-function body))))
+      )))
 
 
 
-(def datoms-update-preferred-term
-   [[7327145487499336
-    :concept/preferred-term
-    70746976177619018
-    13194139533320
-    true
-    #inst "2019-02-16T17:10:51.894-00:00"
-    "4"
-    "Annonsassistent"
-    32136525856637001]
-   [7327145487499336
-    :concept/preferred-term
-    32136525856637001
-    13194139533320
-    false
-    #inst "2019-02-16T17:10:51.894-00:00"
-    "4"
-    "Annonsassistent"
-    32136525856637001]
-   [7327145487499336
-    :concept/preferred-term
-    70746976177619018
-    13194139533320
-    true
-    #inst "2019-02-16T17:10:51.894-00:00"
-    "4"
-    "Annonsassistent/Annonssekreterare"
-    70746976177619018]
-   [7327145487499336
-    :concept/preferred-term
-    32136525856637001
-    13194139533320
-    false
-    #inst "2019-02-16T17:10:51.894-00:00"
-    "4"
-    "Annonsassistent/Annonssekreterare"
-    70746976177619018]]
-  )
 
-(def expected-update-events
-  '({:event-type "UPDATED",
-     :transaction-id 13194139533320,
-     :category nil,
-     :timestamp #inst "2019-02-16T17:10:51.894-00:00",
-     :concept-id "4",
-     :preferred-term "Annonsassistent/Annonssekreterare"})
-  )
+(test/deftest ^:integration changes-test-1
+  (test/testing "test event stream deprecated"
+    (let [[status body] (util/send-request-to-json-service
+                          :get "/v0/taxonomy/public/changes"
+                          :headers [util/header-auth-user]
+                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
+         ]
+      ( test/is (not (empty? (filter my-filtering-deprecated-function body))))
+      )))
+
+(test/deftest ^:integration changes-test-2
+  (test/testing "test event stream transactionid"
+    (let [[status body] (util/send-request-to-json-service
+                          :get "/v0/taxonomy/public/changes"
+                          :headers [util/header-auth-user]
+                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
+          ]
+      ( test/is  (empty? (filter my-filtering-transactionid-function body)))
+      )))
 
 
-(test/deftest  changes-test-update-event
-  (test/testing "Testing convert datoms to update event"
-    (test/is (= expected-update-events
-                (events/convert-history-to-events datoms-update-preferred-term)
-                ))))
+
+

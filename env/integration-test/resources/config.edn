@@ -1,7 +1,18 @@
-{:datomic-name "taxonomy_v13"
- :datomic-cfg {:server-type :peer-server
-               :access-key  "myaccesskey"
-               :secret      "mysecret"
-               :endpoint    "localhost:8998"}
- :database-url "datomic:dev://localhost:4334/taxonomy_v13"
+;{:datomic-name "taxonomy_v13"
+; :datomic-cfg {:server-type :peer-server
+;               :access-key  "myaccesskey"
+;               :secret      "mysecret"
+;               :endpoint    "localhost:8998"}
+; :database-url "datomic:dev://localhost:4334/taxonomy_v13"
+; }
+
+
+{:datomic-name "jobtech-taxonomy-development"
+ :datomic-cfg  {
+                :server-type :ion
+                :region      "eu-west-1" ;; e.g. us-east-1
+                :system      "prod-jobtech-taxonomy-db"
+                ;;:creds-profile "<your_aws_profile_if_not_using_the_default>"
+                :endpoint    "http://entry.prod-jobtech-taxonomy-db.eu-west-1.datomic.net:8182/"
+                :proxy-port  8182}
  }
