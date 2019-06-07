@@ -1,6 +1,6 @@
 {:prod true
  :port 3000
- :datomic-name "taxonomy_v13"
+ :datomic-name "integration-test"
  :datomic-cfg {:server-type :ion
                :region "eu-west-1" ;; e.g. us-east-1
                :system "prod-jobtech-taxonomy-db"
