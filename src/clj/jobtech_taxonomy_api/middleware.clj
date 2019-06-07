@@ -20,22 +20,13 @@
                      :on-error on-error}))
 
 ;; Define a in-memory relation between tokens and users:
-(def hardcoded-tokens {:2f904e245c1f5 :admin
+(def tokens {:2f904e245c1f5 :admin
              :45c1f5e3f05d0 :user
              :111 :mupp})
 
-(defn get-tokens-from-system-env []
-  (get-in env [:jobtech-taxonomy-api :auth-tokens])
-  )
-
-(defn get-all-tokens []
-  (merge hardcoded-tokens (get-tokens-from-system-env))
-  )
-
 (defn get-token [token]
   "i e (get-token :admin)"
-  (let [tokens (get-all-tokens)]
-    (str (clojure.string/replace (first (filter #(= (% tokens) token) (keys tokens))) #":" ""))))
+  (str (clojure.string/replace (first (filter #(= (% tokens) token) (keys tokens))) #":" "")))
 
 ;; Define an authfn, function with the responsibility
 ;; to authenticate the incoming token and return an
@@ -45,7 +36,7 @@
 (defn my-authfn
   [request token]
   (let [token (keyword token)]
-    (get (get-all-tokens) token nil)))
+    (get tokens token nil)))
 
 ;; Create an instance
 (def api-backend-instance (apikey-backend {:authfn my-authfn}))

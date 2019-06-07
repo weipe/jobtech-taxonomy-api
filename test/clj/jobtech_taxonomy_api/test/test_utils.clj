@@ -2,24 +2,78 @@
   (:require [clojure.test :refer :all]
             [muuntaja.core :as m]
             [ring.mock.request :refer :all]
+            [cprop.source :as source]
             [jobtech-taxonomy-api.handler :refer :all]
             [jobtech-taxonomy-api.config :refer :all]
             [jobtech-taxonomy-api.db.database-connection :refer :all]
             [jobtech-taxonomy-api.middleware.formats :as formats]
             [jobtech-taxonomy-api.middleware :as middleware]
+            [jobtech-taxonomy-database.datomic-connection :as db]
+            [datomic.client.api :as d]
             [mount.core :as mount]))
 
 (def header-auth-user  { :key "api-key", :val (middleware/get-token :user)})
 (def header-auth-admin { :key "api-key", :val (middleware/get-token :admin)})
 
-(defn fixture [already-run f]
-  (if @already-run
-    (do
-      (mount/start #'jobtech-taxonomy-api.db.database-connection/conn
-                   #'jobtech-taxonomy-api.config/env
-                   #'jobtech-taxonomy-api.handler/app)
-      (reset! already-run false)))
-  (f))
+(defmacro with-properties [property-map & body]
+  "Run a badly simulated closure with a system property. Not thread safe."
+  `(let [pm# ~property-map
+         props# (into {} (for [[k# v#] pm#]
+                           [k# (System/getProperty k#)]))]
+     (doseq [k# (keys pm#)]
+       (System/setProperty k# (get pm# k#)))
+     (try
+       ~@body
+       (finally
+         (doseq [k# (keys pm#)]
+           (if-not (get props# k#)
+             (System/clearProperty k#)
+             (System/setProperty k# (get props# k#))))))))
+
+(defn fixture [f]
+  "Setup a temporary database, run (f), and then teardown the database."
+  (letfn [(replace-db-name [c db-name]
+            "Two tests cannot run simultanously, so generate unique names."
+            (assoc c :datomic-name db-name))]
+    (let [file-config (source/from-file
+                       jobtech-taxonomy-api.config/integration-test-resource)
+          db-name (str (get file-config :datomic-name) "-" (rand-int Integer/MAX_VALUE))
+          config (replace-db-name file-config db-name)]
+      (with-properties {"integration-test-db" db-name}
+
+        (println (str "DBNAME " db-name))
+        (prn (db/list-databases config))
+
+        (db/create-database config)
+
+        ;; The purpose of loop below is to perform repeated attempts to
+        ;; initialise the newly created database. It will succeed as soon as the
+        ;; database engine is ready creating the database.
+        (loop [acc 0]
+          (cond
+            (>= acc 10) (throw (Exception. "Database cannot be initialised"))
+            :else (do
+                    (if (= "DATABASE-DOWN"
+                           (try
+                             (db/init-new-db (db/get-conn config))
+                             (Thread/sleep 100)
+                             "DATABASE-UP"
+                             (catch Exception e "DATABASE-DOWN")))
+                      (recur (+ acc 1))
+                      1))))
+
+        (mount/start #'jobtech-taxonomy-api.db.database-connection/conn
+                     #'jobtech-taxonomy-api.config/env
+                     #'jobtech-taxonomy-api.handler/app)
+        (f)
+
+        (mount/stop #'jobtech-taxonomy-api.db.database-connection/conn
+                    ;#'jobtech-taxonomy-api.config/env
+                    ;#'jobtech-taxonomy-api.handler/app
+                    )
+
+        (db/delete-database config)
+        ))))
 
 (defn parse-json [body]
   (m/decode formats/instance "application/json" body))
@@ -48,9 +102,3 @@
         status (:status response)
         body (parse-json (:body response))]
     (list status body)))
-
-;;:;;(defn x [method endpoint & {:keys [header query-params]}]
-;;:;;  query-params)
-;;:;;  (let [{hdr :header, qp :query-params} rest]
-;;:;;    hdr))
-;;:(x :get "endpoint" :header 1, :query-params {:x 1} )
