@@ -38,3 +38,13 @@
                          :headers [util/header-auth-user]
                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])]
       (test/is (empty? (filter my-filtering-transactionid-function body))))))
+
+(test/deftest ^:integration changes-test-3
+  (test/testing "test event stream"
+    (let [[status body] (util/send-request-to-json-service
+                         :get "/v0/taxonomy/public/changes"
+                         :headers [util/header-auth-user]
+                         :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
+          an-event (first body)]
+      (prn an-event)
+      (test/is (= "CREATED" (:eventType an-event))))))
