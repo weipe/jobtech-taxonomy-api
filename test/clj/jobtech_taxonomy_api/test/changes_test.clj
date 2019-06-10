@@ -22,7 +22,7 @@
       (test/is (= "cykla" (get found-concept :preferredLabel))))))
 
 
-(test/deftest ^:integration-inactive changes-test-2
+(test/deftest ^:integration-inactive changes-test-1
   (test/testing "test event stream"
     (core/assert-concept "skill2" "cykla2" "cykla2")
     (let [[status body] (util/send-request-to-json-service
@@ -55,7 +55,7 @@
   ( = "DEPRECATED" (:eventType element))
   )
 
-(test/deftest ^:integration-inactive changes-test-0
+(test/deftest ^:integration-inactive changes-test-2
   (test/testing "test event stream created"
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/changes"
@@ -68,7 +68,7 @@
 
 
 
-(test/deftest ^:integration-inactive changes-test-1
+(test/deftest ^:integration-inactive changes-test-3
   (test/testing "test event stream deprecated"
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/changes"
@@ -78,7 +78,7 @@
       ( test/is (not (empty? (filter my-filtering-deprecated-function body))))
       )))
 
-(test/deftest ^:integration-inactive changes-test-2
+(test/deftest ^:integration-inactive changes-test-4
   (test/testing "test event stream transactionid"
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/changes"
