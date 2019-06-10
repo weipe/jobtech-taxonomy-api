@@ -2,11 +2,8 @@
   (:require [clojure.test :as test]
             [jobtech-taxonomy-api.test.test-utils :as util]))
 
-(def test-db-name "Two tests cannot run simultanously, so generate unique names."
-  (str "integration-test-" 132343212))
-;       (rand-int Integer/MAX_VALUE)))
 
-(test/use-fixtures :each (partial util/fixture test-db-name))
+(test/use-fixtures :each util/fixture)
 
 (test/deftest ^:integration-inactive unauthorized-access-public
   (test/testing "unauthorized access to /v0/taxonomy/public/concept/types"
