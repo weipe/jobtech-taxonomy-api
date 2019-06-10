@@ -67,7 +67,7 @@
    :test          [:project/test :profiles/test]
 
    :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
-                    :resource-paths ["env/dev/resources"]}
+                    :resource-paths ["env/integration-test/resources"]}
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
                                  [pjstadig/humane-test-output "0.9.0"]
