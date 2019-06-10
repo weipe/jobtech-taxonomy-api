@@ -41,7 +41,6 @@
           config (replace-db-name file-config db-name)]
       (with-properties {"integration-test-db" db-name}
 
-        (println (str "DBNAME " db-name))
         (prn (db/list-databases config))
 
         (db/create-database config)
