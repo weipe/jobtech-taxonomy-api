@@ -1,11 +1,10 @@
-(ns jobtech-taxonomy-api.test.changes-test
+(ns jobtech-taxonomy-api.test.concepts-test
   (:require [clojure.test :as test]
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
             ))
 
-(def run-fixture? (atom true))
-
+(test/use-fixtures :each util/fixture)
 
 (defn my-filtering-created-function [element]
 
@@ -23,9 +22,8 @@
   (= "DEPRECATED" (:eventType element))
   )
 
-(test/use-fixtures :each (partial util/fixture run-fixture?))
 
-(test/deftest ^:integration changes-test-0
+(test/deftest ^:integration-inactive changes-test-0
   (test/testing "test event stream created"
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/changes"
@@ -35,7 +33,7 @@
       (test/is (not (empty? (filter my-filtering-created-function body))))
       )))
 
-(test/deftest ^:integration changes-test-1
+(test/deftest ^:integration-inactive changes-test-1
   (test/testing "test event stream deprecated"
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/changes"
@@ -45,7 +43,7 @@
       (test/is (not (empty? (filter my-filtering-deprecated-function body))))
       )))
 
-(test/deftest ^:integration changes-test-2
+(test/deftest ^:integration-inactive changes-test-2
   (test/testing "test event stream transactionid"
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/changes"
@@ -54,7 +52,3 @@
           ]
       (test/is (empty? (filter my-filtering-transactionid-function body)))
       )))
-
-
-
-
