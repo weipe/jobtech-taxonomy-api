@@ -682,8 +682,9 @@
 
 (def datoms-update-preferred-term
 
-   #:concept{:preferred-term
-           [[7327145487499336
+  #:concept{
+            :preferred-term
+             [[7327145487499336
              :concept/preferred-term
              70746976177619018
              13194139533320
@@ -719,8 +720,6 @@
              "4"
              "Annonsassistent/Annonssekreterare"
              70746976177619018]]}
-
-
 
   )
 

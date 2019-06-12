@@ -106,3 +106,8 @@ Create the file "dev-config.edn" with this content
  ; :database-url "datomic:mem://jobtech_taxonomy_api_datomic_dev"
 }
 ```
+
+## COMMON ERRORS
+
+If you get :server-type must be :cloud, :peer-server, or :local
+you have forgot to start luminus. Run (start) in the user> namespace
