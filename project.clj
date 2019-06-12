@@ -68,7 +68,7 @@
 
    :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
                     ;; You can only comment in one resource-path:
-                    ; :resource-paths ["env/dev/resources"] ; comment in for local use
+                    ;:resource-paths ["env/dev/resources"] ; comment in for local use
                     :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
                     }
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
