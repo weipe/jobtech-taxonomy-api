@@ -95,13 +95,17 @@ You need to require `[jobtech-taxonomy-api.test.test-utils :as util]`.
 Place one occurance of this line in your test file:
 `(test/use-fixtures :each util/fixture)`.
 
-            [jobtech-taxonomy-api.db.events :as events]
-            [jobtech-taxonomy-api.db.core :as core]
-
 #### Define a test which calls functions directly
 Here is a simple example of a test which asserts a skill concept, and
 then checks for its existence.
 
+First, require
+```
+[jobtech-taxonomy-api.db.core :as core]
+
+```
+
+Then write a test:
 ```
 (test/deftest ^:concept-test-0 concept-test-0
   (test/testing "Test concept assertion."
@@ -114,6 +118,13 @@ then checks for its existence.
 Here is a simple example of a test which asserts a skill concept, and
 then checks for its existence via the REST API:
 
+First, require
+```
+[jobtech-taxonomy-api.db.core :as core]
+
+```
+
+Then write a test:
 ```
 (test/deftest ^:changes-test-1 changes-test-1
   (test/testing "test event stream"
