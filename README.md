@@ -66,19 +66,79 @@ Load http://127.0.0.1:4444/graphview.html in your web browser.
 
 
 ## Testing
+The integration test setup creates a temporary database for each test,
+which makes it safe to do any modifications without leaving traces
+behind.
 
-### Local testing
- 1. make sure your project.clj has the right kaocha resource commented:
+Summary:
+ - test runner: Kaocha (https://github.com/lambdaisland/kaocha).
+ - test command: `lein kaocha --focus-meta TAG`
+   where TAG is the name of one of the test's tags (such as `integration`).
+ - status: for integration tests that rely on a live database, only one test
+   can be run at a time. This means that you should assign each test a unique
+   tag (e.g. `(test/deftest ^:changes-test-2 changes-test-2 ...)`), and then
+   run it with `lein kaocha --focus-meta changes-test-2`.
 
+### Howto write an integration test
+
+#### File and namespace
+Your test should reside in the directory `test/clj/jobtech_taxonomy_api/test/`.
+
+You should either pick an existing file, or create a new file, ending
+with `_test.clj`.  It should use a namespace like this: `(ns
+jobtech-taxonomy-api.test.FILENAME ...)`, where FILENAME is for example
+`changes-test`.
+
+You need to require `[jobtech-taxonomy-api.test.test-utils :as util]`.
+
+#### Define fixtures
+Place one occurance of this line in your test file:
+`(test/use-fixtures :each util/fixture)`.
+
+            [jobtech-taxonomy-api.db.events :as events]
+            [jobtech-taxonomy-api.db.core :as core]
+
+#### Define a test which calls functions directly
+Here is a simple example of a test which asserts a skill concept, and
+then checks for its existence.
+
+```
+(test/deftest ^:concept-test-0 concept-test-0
+  (test/testing "Test concept assertion."
+    (core/assert-concept "skill" "cykla" "cykla")
+    (let [found-concept (first (core/find-concept-by-preferred-term "cykla"))]
+      (test/is (= "cykla" (get found-concept :preferredLabel))))))
+```
+
+#### Define a test which calls the Luminus REST API
+Here is a simple example of a test which asserts a skill concept, and
+then checks for its existence via the REST API:
+
+```
+(test/deftest ^:changes-test-1 changes-test-1
+  (test/testing "test event stream"
+    (core/assert-concept "skill" "cykla" "cykla")
+    (let [[status body] (util/send-request-to-json-service
+                         :get "/v0/taxonomy/public/concepts"
+                         :headers [util/header-auth-user]
+                         :query-params [{:key "preferredLabel", :val "cykla"}])]
+      (test/is (= "cykla" (get (first body) :preferredLabel))))))
+```
+
+
+### Local testing vs Jenkins testing
+Kaocha can only use one of either the configuration to run locally, or to run from Jenkins. The default is Jenkins.
+
+To run locally, check your project.clj that is has the right kaocha
+resource commented:
+
+```
     :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
                     ;; You can only comment in one resource-path:
                     :resource-paths ["env/dev/resources"] ; comment in for local use
                     ; :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
                     }
-
- 2. Run a test suite, like integration:
-
-    lein kaocha --focus-meta integration
+```
 
 ## License
 
