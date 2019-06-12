@@ -67,7 +67,16 @@ Load http://127.0.0.1:4444/graphview.html in your web browser.
 
 ## Testing
 
-To run the integration tests only, use
+### Local testing
+ 1. make sure your project.clj has the right kaocha resource commented:
+
+    :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
+                    ;; You can only comment in one resource-path:
+                    :resource-paths ["env/dev/resources"] ; comment in for local use
+                    ; :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
+                    }
+
+ 2. Run a test suite, like integration:
 
     lein kaocha --focus-meta integration
 
