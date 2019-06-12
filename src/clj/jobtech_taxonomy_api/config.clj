@@ -6,24 +6,45 @@
 
 (def integration-test-resource "env/integration-test/resources/config.edn")
 
-(defstate env
-  :start
+
+
+(defn make-config []
   (letfn [(replace-db-name [config name]
             (assoc config :datomic-name name))]
     (let [base-list [(args)
                      (source/from-system-props)
                      (source/from-env)]
+          merged-conf (load-config :merge base-list)
           inttest-db (System/getProperty "integration-test-db")
           checked-test-list (if (nil? inttest-db)
                               base-list
-                              [(replace-db-name (source/from-file integration-test-resource) inttest-db)])]
-      ;; handy while debugging: dump current config to file for inspection
-    (with-open [w (clojure.java.io/writer "/tmp/skrap.edn")]
-      (binding [*out* w]
-        (prn (load-config
-              :merge
-              checked-test-list))))
+			      [(replace-db-name merged-conf inttest-db)])]
 
     (load-config
      :merge
      checked-test-list))))
+     
+(defstate env
+  :start
+  (make-config))
+;;  (letfn [(replace-db-name [config name]
+;;            (assoc config :datomic-name name))]
+;;    (let [base-list [(args)
+;;                     (source/from-system-props)
+;;                     (source/from-env)]
+;;          merged-conf (load-config :merge base-list)
+;;          inttest-db (System/getProperty "integration-test-db")
+;;          checked-test-list (if (nil? inttest-db)
+;;                              base-list
+;;			      [(replace-db-name merged-conf inttest-db)])]
+;;      ;; handy while debugging: dump current config to file for inspection
+;;    (with-open [w (clojure.java.io/writer "/tmp/skrap.edn")]
+;;      (binding [*out* w]
+;;        (prn (load-config
+;;              :merge
+;;              checked-test-list))))
+;;
+;;    (load-config
+;;     :merge
+;;     checked-test-list))))
+

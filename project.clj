@@ -67,7 +67,10 @@
    :test          [:project/test :profiles/test]
 
    :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
-                    :resource-paths ["env/integration-test/resources"]}
+                    ;; You can only comment in one resource-path:
+                    :resource-paths ["env/dev/resources"] ; comment in for local use
+                    ; :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
+                    }
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
                   :dependencies [[expound "0.7.2"]
                                  [pjstadig/humane-test-output "0.9.0"]

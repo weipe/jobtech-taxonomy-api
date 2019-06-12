@@ -35,13 +35,12 @@
   (letfn [(replace-db-name [c db-name]
             "Two tests cannot run simultanously, so generate unique names."
             (assoc c :datomic-name db-name))]
-    (let [file-config (source/from-file
-                       jobtech-taxonomy-api.config/integration-test-resource)
+    (let [file-config (jobtech-taxonomy-api.config/make-config)
           db-name (str (get file-config :datomic-name) "-" (rand-int Integer/MAX_VALUE))
           config (replace-db-name file-config db-name)]
       (with-properties {"integration-test-db" db-name}
 
-        (prn (db/list-databases config))
+        ;(prn (db/list-databases config))
 
         (db/create-database config)
 
