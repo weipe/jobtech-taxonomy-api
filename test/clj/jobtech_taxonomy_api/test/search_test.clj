@@ -2,53 +2,18 @@
   (:require [clojure.test :as test]
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
-            ))
+            [jobtech-taxonomy-api.db.core :as core]))
 
 (test/use-fixtures :each util/fixture)
 
-(defn my-filtering-created-function [element]
-
-  (= "CREATED" (:eventType element))
-  )
 
 
-(defn my-filtering-transactionid-function [element]
-
-  (= "13194139533328" (:transactionId element))
-  )
-
-(defn my-filtering-deprecated-function [element]
-
-  (= "DEPRECATED" (:eventType element))
-  )
-
-
-(test/deftest ^:integration-inactive changes-test-0
-  (test/testing "test event stream created"
+(test/deftest ^:integration-search-test-0 search-test-0
+  (test/testing "test search "
+    (core/assert-concept "skill" "cyklade" "cykla")
     (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/changes"
+                          :get "/v0/taxonomy/public/search"
                           :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
-          ]
-      (test/is (not (empty? (filter my-filtering-created-function body))))
-      )))
-
-(test/deftest ^:integration-inactive changes-test-1
-  (test/testing "test event stream deprecated"
-    (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/changes"
-                          :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
-          ]
-      (test/is (not (empty? (filter my-filtering-deprecated-function body))))
-      )))
-
-(test/deftest ^:integration-inactive changes-test-2
-  (test/testing "test event stream transactionid"
-    (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/changes"
-                          :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
-          ]
-      (test/is (empty? (filter my-filtering-transactionid-function body)))
-      )))
+                          :query-params [{:key "q", :val "cykla"}])
+          found-concept (first (core/find-concept-by-preferred-term "cykla"))]
+      (test/is (= "cykla" (get found-concept :preferredLabel))))))

@@ -2,53 +2,32 @@
   (:require [clojure.test :as test]
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
+            [jobtech-taxonomy-api.db.core :as core]
             ))
 
 (test/use-fixtures :each util/fixture)
 
-(defn my-filtering-created-function [element]
-
-  (= "CREATED" (:eventType element))
-  )
-
-
-(defn my-filtering-transactionid-function [element]
-
-  (= "13194139533328" (:transactionId element))
-  )
-
-(defn my-filtering-deprecated-function [element]
-
-  (= "DEPRECATED" (:eventType element))
-  )
-
-
-(test/deftest ^:integration-inactive changes-test-0
-  (test/testing "test event stream created"
+(test/deftest ^:integration-concepts-test-0 concepts-test-0
+  (test/testing "test concepts "
+    (core/assert-concept "skill" "cyklade" "cykla")
     (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/changes"
+                          :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
-          ]
-      (test/is (not (empty? (filter my-filtering-created-function body))))
-      )))
+                          :query-params [{:key "type", :val "skill"}])
+          found-concept (first (core/find-concept-by-preferred-term "cykla"))]
+      (test/is (= "cykla" (get found-concept :preferredLabel))))))
 
-(test/deftest ^:integration-inactive changes-test-1
-  (test/testing "test event stream deprecated"
-    (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/changes"
-                          :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
-          ]
-      (test/is (not (empty? (filter my-filtering-deprecated-function body))))
-      )))
 
-(test/deftest ^:integration-inactive changes-test-2
-  (test/testing "test event stream transactionid"
+(test/deftest ^:integration-concepts-test-1 concepts-test-1
+  (test/testing "test concepts"
+    (core/assert-concept "skill2" "cyklade" "cykla2")
     (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/changes"
+                          :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2018-05-21%2009%3A46%3A08"}])
-          ]
-      (test/is (empty? (filter my-filtering-transactionid-function body)))
-      )))
+                          :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
+          an-event (first body)
+          found-concept (first (core/find-concept-by-preferred-term "cykla2"))]
+
+      (test/is (= "CREATED" (:eventType an-event)))
+
+      (test/is (= "cykla2" (get found-concept :preferredLabel))))))

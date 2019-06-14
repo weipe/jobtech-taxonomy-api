@@ -13,6 +13,7 @@
 
 (test/deftest ^:integration-authorized-access-public authorized-access-public
   (test/testing "unauthorized access to /v0/taxonomy/public/concept/types"
+
     (let [[status body] (util/send-request-to-json-service
                          :get "/v0/taxonomy/public/concept/types"
                          :headers [util/header-auth-user])]
