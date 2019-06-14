@@ -24,10 +24,6 @@
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]
-                          :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
-          an-event (first body)
+                          :query-params [{:key "type", :val "skill"}])
           found-concept (first (core/find-concept-by-preferred-term "cykla2"))]
-
-      (test/is (= "CREATED" (:eventType an-event)))
-
       (test/is (= "cykla2" (get found-concept :preferredLabel))))))
