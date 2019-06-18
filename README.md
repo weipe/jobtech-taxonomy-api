@@ -151,6 +151,64 @@ resource commented:
                     }
 ```
 
+
+
+## Logging
+
+By default, logging functionality is provided by the
+clojure.tools.logging library. The library provides macros that
+delegate to a specific logging implementation. The default
+implementation used in Luminus is the logback library.
+
+Any Clojure data structures can be logged directly.
+
+
+### Examples
+```
+(ns example
+ (:require [clojure.tools.logging :as log]))
+
+(log/info "Hello")
+=>[2015-12-24 09:04:25,711][INFO][myapp.handler] Hello
+
+(log/debug {:user {:id "Anonymous"}})
+=>[2015-12-24 09:04:25,711][DEBUG][myapp.handler] {:user {:id "Anonymous"}}
+```
+
+
+### Description of log levels
+#### trace
+#### debug
+#### info
+#### warn
+#### error
+#### fatal
+
+### Logging of exceptions
+
+
+```
+(ns example
+ (:require [clojure.tools.logging :as log]))
+
+(log/error (Exception. "I'm an error") "something bad happened")
+=>[2015-12-24 09:43:47,193][ERROR][myapp.handler] something bad happened
+  java.lang.Exception: I'm an error
+    	at myapp.handler$init.invoke(handler.clj:21)
+    	at myapp.core$start_http_server.invoke(core.clj:44)
+    	at myapp.core$start_app.invoke(core.clj:61)
+    	...
+```
+
+### Logging backends
+### Configuring logging
+Each profile has its own log configuration. For example, `dev`'s
+configuration is located in `env/dev/resources/logback.xml`.
+
+It works like a standard Java log configuration, with appenders and loggers.
+
+The default configuration logs to standard out, and to log files in log/.
+
 ## License
 
 GPLv3

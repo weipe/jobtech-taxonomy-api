@@ -74,6 +74,7 @@
        :responses {200 {:schema show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
+       (log/info (str "GET /changes fromDateTime:" fromDateTime " offset:" offset " limit:" limit))
        (response/ok (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)))
 
      (GET "/concepts"    []
@@ -88,6 +89,7 @@
        :responses {200 {:schema find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
+       (log/info (str "GET /concepts " "id:" id " preferredLabel:" preferredLabel " type:" type " deprecated:" deprecated " offset:" offset " limit:" limit))
        (response/ok (find-concepts id preferredLabel type deprecated offset limit)))
 
      (GET "/search" []
@@ -98,6 +100,7 @@
        :responses {200 {:schema get-concepts-by-term-start-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "get concepts by part of string"
+       (log/info (str "GET /search q:" q " type:" type " offset:" offset " limit:" limit))
        (response/ok (get-concepts-by-search q type offset limit)))
 
      (GET "/deprecated-concept-history-since" []
@@ -105,6 +108,7 @@
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
+       (log/info (str "GET /deprecated-concept-history-since date-time:" date-time))
        (response/ok (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))))
 
      (GET "/concept/types"    []
@@ -112,7 +116,8 @@
        :responses {200 {:schema [ s/Str ]}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Return a list of all taxonomy types."
-       {:body (get-all-taxonomy-types)}))
+       (log/info "GET /concept/types")
+       (response/ok (get-all-taxonomy-types))))
 
    (context "/v0/taxonomy/private" []
      :tags ["private"]
