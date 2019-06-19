@@ -3,6 +3,7 @@
    [datomic.client.api :as d]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.config :refer [env]]
+   [jobtech-taxonomy-api.db.api-util :as util]
    [mount.core :refer [defstate]]))
 
 (def show-concept-history
@@ -175,7 +176,8 @@ Like replaced-by will return nil."
 
 (defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."
-  (map transform-event-result  (get-all-events-since db date-time)))
+  (let [result (map transform-event-result  (get-all-events-since db date-time))]
+    (util/paginate-datomic-result result offset limit)))
 
 #_(defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."
