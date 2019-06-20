@@ -16,6 +16,7 @@
    [jobtech-taxonomy-api.middleware :as middleware]
    [jobtech-taxonomy-api.db.concepts :as concepts]
    [jobtech-taxonomy-api.db.search :as search]
+   [jobtech-taxonomy-api.db.information-extraction :as ie]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
@@ -113,7 +114,19 @@
        :responses {200 {:schema [ s/Str ]}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Return a list of all taxonomy types."
-       {:body (get-all-taxonomy-types)}))
+       {:body (get-all-taxonomy-types)})
+
+
+     (POST "/parse-text"    []
+       :query-params [text :- String]
+       :responses {200 {:schema [ s/Any]}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Finds all concepts in a text."
+       {:body (ie/parse-text text)})
+
+
+
+     )
 
    (context "/v0/taxonomy/private" []
      :tags ["private"]
