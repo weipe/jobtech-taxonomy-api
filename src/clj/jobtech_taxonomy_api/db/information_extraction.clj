@@ -47,6 +47,7 @@
   )
 
 (defn- build-dictionary []
+  "Creates a dictionary with the token to look for as a key and the concept as a value."
   (reduce dictionary-reducer-fn {} (all-concepts))
   )
 
@@ -58,7 +59,7 @@
 
 (defn parse-text [text]
   (let [matches (map first (re-seq (taxonomy-regex) text))
-        concepts (mapcat lookup-in-taxonomy-dictionary matches)
+        concepts (seq (set (mapcat lookup-in-taxonomy-dictionary matches)))
         ]
     concepts
     )
