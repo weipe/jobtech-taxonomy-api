@@ -1,12 +1,12 @@
 (ns jobtech-taxonomy-api.db.concepts
   (:refer-clojure :exclude [type])
   (:require
+   [schema.core :as s]
    [datomic.client.api :as d]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.db.api-util :refer :all]
    [clojure.set :as set]
    ))
-
 
 (comment
   "To understand the idea behind the following code read this blog post
@@ -90,3 +90,13 @@
     parsed-result
     )
   )
+
+(def find-concepts-schema
+  "The response schema for /concepts. Beta for v0.9."
+  [{ :id s/Str
+    :type s/Str
+    :definition s/Str
+    :preferredLabel s/Str
+    (s/optional-key :deprecated) s/Bool
+    }
+   ])

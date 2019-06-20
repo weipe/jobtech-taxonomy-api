@@ -14,7 +14,8 @@
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
    [jobtech-taxonomy-api.middleware :as middleware]
-   [jobtech-taxonomy-api.db.concepts :refer :all]
+   [jobtech-taxonomy-api.db.concepts :as concepts]
+   [jobtech-taxonomy-api.db.search :as search]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
@@ -85,20 +86,20 @@
                       {limit :- Long nil}
                       ]
 
-       :responses {200 {:schema find-concepts-schema}
+       :responses {200 {:schema concepts/find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
-       (response/ok (find-concepts id preferredLabel type deprecated offset limit)))
+       (response/ok (concepts/find-concepts id preferredLabel type deprecated offset limit)))
 
      (GET "/search" []
        :query-params [q       :- String
-                      {type   :- String ""}
-                      {offset :- Long 0}
-                      {limit  :- Long 0}]
-       :responses {200 {:schema get-concepts-by-term-start-schema}
+                      {type   :- String nil}
+                      {offset :- Long nil}
+                      {limit  :- Long nil}]
+       :responses {200 {:schema search/get-concepts-by-search-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "get concepts by part of string"
-       (response/ok (get-concepts-by-search q type offset limit)))
+       :summary      "Autocomplete from query string"
+       (response/ok (search/get-concepts-by-search q type offset limit)))
 
      (GET "/deprecated-concept-history-since" []
        :query-params [date-time :- String]

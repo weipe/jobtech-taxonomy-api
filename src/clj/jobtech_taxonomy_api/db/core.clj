@@ -59,15 +59,7 @@
 (defn find-concept-by-id [id]
   (d/q find-concept-by-id-query (get-db) id))
 
-(def find-concepts-schema
-  "The response schema for /concepts. Beta for v0.9."
-    [{ :id s/Str
-       :type s/Str
-       :definition s/Str
-       :preferredLabel s/Str
-       (s/optional-key :deprecated) s/Bool
-      }
-     ])
+
 
 #_(defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
@@ -283,90 +275,3 @@
         (get-db)
         date-time)
    (format-result)))
-
-(defn ignore-case [string]
-  (str "(?i:.*" string  ".*)"))
-
-(def find-concepts-by-term-start-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    {:concept/preferred-term [:term/base-form]}])
-    :in $ ?letter
-    :where [?c :concept/preferred-term ?t]
-    [?t :term/base-form ?term]
-    (not [?c :concept/deprecated true])
-    ;;[(.startsWith ^String ?term ?letter)]
-    [(.matches ^String ?term ?letter)]])
-
-
-
-(def find-concepts-by-term-start-type-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    {:concept/preferred-term [:term/base-form]}])
-    :in $ ?letter ?type
-    :where
-    [?c :concept/category ?type]
-    [?c :concept/preferred-term ?t]
-    [?t :term/base-form ?term]
-    (not [?c :concept/deprecated true])
-    [(.matches ^String ?term ?letter)]])
-
-
-(def get-concepts-by-term-start-schema
-  "The response schema for the query below."
-  [{:id s/Str
-    :definition s/Str
-    :type s/Str
-    (s/optional-key :preferredLabel) s/Str}])
-
-
-(defn get-concepts-by-term-start [letter]
-  (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
-  )
-
-(defn get-concepts-by-term-start-type [letter type]
-  (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-type-query (get-db) (ignore-case letter) type))
-  )
-
-
-#_(def get-concepts-by-term-start-schema
-  "The response schema for the query below. Beta for v0.9."
-  [{:id s/Str
-    :definition s/Str
-    :preferredLabel s/Str
-    :type s/Str}])
-
-
-#_(defn get-concepts-by-search [q type offset limit]
-  "Beta for v0.9."
-  '({ :id "Vpaw_yX7_BNY"
-     :preferredLabel "Sportdykning"
-     :type :skill }))
-
-
-
-(comment
-  (defn get-concepts [id label type]
-
-    cond  iff id
-
-
-    )
-
-  )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-;;;;;;;;;;; search
-
-(defn get-concepts-by-search [q type offset limit]
-  "Beta for v0.9."
-  (let [result (cond (and (empty-string-to-nil q) (empty-string-to-nil type))
-                     (get-concepts-by-term-start-type q (keyword type))
-                     (empty-string-to-nil q) (get-concepts-by-term-start q)
-                     :else "error" )]
-    (paginate-datomic-result result offset limit)))
