@@ -5,7 +5,7 @@
   )
 
 (defn rename-concept-keys-for-api [concept]
-  (set/rename-keys concept {:concept/preferred-term :preferredLabel, :concept/id :id, :concept/description :definition, :concept/category :type :concept/deprecated :deprecated}))
+  (set/rename-keys concept {:concept/preferred-label :preferredLabel, :concept/id :id, :concept/definition :definition, :concept/type :type :concept/deprecated :deprecated}))
 
 (defn lift-term [concept]
   (assoc (dissoc concept :preferred-term)
@@ -14,8 +14,6 @@
 (defn parse-find-concept-datomic-result [result]
   (->> result
        (map first)
-       (map #(lift-term %))
-       (map #(update % :concept/category name))
        (map rename-concept-keys-for-api)
        )
   )

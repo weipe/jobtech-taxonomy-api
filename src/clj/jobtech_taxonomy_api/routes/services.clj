@@ -77,12 +77,12 @@
        (response/ok (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)))
 
      (GET "/concepts"    []
-       :query-params [{id :- String ""}
-                      {preferredLabel :- String ""}
-                      {type :- String ""}
+       :query-params [{id :- String nil}
+                      {preferredLabel :- String nil}
+                      {type :- String nil}
                       {deprecated :- Boolean false}
-                      {offset :- Long 0}
-                      {limit :- Long 0}
+                      {offset :- Long nil}
+                      {limit :- Long nil}
                       ]
 
        :responses {200 {:schema find-concepts-schema}
