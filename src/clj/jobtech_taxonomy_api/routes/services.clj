@@ -127,7 +127,13 @@
      (DELETE "/concept"    []
        :query-params [id :- String]
        :summary      "Retract the concept with the given ID."
-       {:body (retract-concept id)})
+       :responses {200 {:schema {:message s/Str}}
+                   404 {:schema {:message s/Str}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       (log/info "GET /concept/types")
+       (if (retract-concept id)
+         (response/ok { :message "OK" })
+         (response/not-found! { :message "Not found" } )))
 
      ;; alternativeTerms (optional - kolla om/hur det görs)
      (POST "/concept"    []

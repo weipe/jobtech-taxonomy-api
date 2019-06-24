@@ -51,6 +51,7 @@
   '[:find (pull ?c
                 [:concept/id
                  :concept/description
+                 :concept/deprecated
                  {:concept/preferred-term [:term/base-form]}
                  {:concept/referring-terms [:term/base-form]}])
     :in $ ?id
@@ -76,11 +77,14 @@
       :type :skill }))
 
 (defn retract-concept [id]
-  (let [retract (d/transact (get-conn) {:tx-data
-                                        [{:concept/id id
-                                          :concept/deprecated true}]})]
-
-    {:msg (if retract "ok" "bad")}))
+  (let [found-concept (find-concept-by-id id)]
+    (if (or (= 0 (count found-concept))
+            (get (ffirst found-concept) :concept/deprecated))
+      false
+      (and (d/transact (get-conn) {:tx-data
+                                   [{:concept/id id
+                                     :concept/deprecated true}]})
+           true))))
 
 
 (def get-relation-graph-query
