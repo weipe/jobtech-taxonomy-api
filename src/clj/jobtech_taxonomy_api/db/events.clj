@@ -17,14 +17,13 @@
     [?tx :db/txInstant ?inst]])
 
 (def show-concept-history-since-query
-  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft ?cat ?deprecated
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type ?deprecated
     :in $ ?since
     :where
 
-    [?e :concept/preferred-term ?pft]
-    [?pft :term/base-form ?term]
+    [?e :concept/preferred-label ?preferred-label]
     [?e :concept/id ?concept-id]
-    [?e :concept/category ?cat]
+    [?e :concept/type ?type]
     [(get-else $ ?e :concept/deprecated false) ?deprecated]
     [?e ?a ?v ?tx ?added]
     [?tx :db/txInstant ?inst]
@@ -41,10 +40,9 @@
   '[:find ?e ?aname ?v ?tx ?added ?concept-id ?term ?pft ?cat
     :in $ ?fromtx
     :where
-    [?e :concept/preferred-term ?pft]
-    [?pft :term/base-form ?term]
+    [?e :concept/preferred-label ?pft]
     [?e :concept/id ?concept-id]
-    [?e :concept/category ?cat]
+    [?e :concept/type ?cat]
     [?e ?a ?v ?tx ?added]
     [?tx :db/txInstant]
     [(< ?fromtx ?tx)]
@@ -57,11 +55,9 @@
   '[:find (pull ?c
                     [:concept/id
                      :concept/description
-                     {:concept/preferred-term [:term/base-form]}
-                     {:concept/referring-terms [:term/base-form]}
+                     :concept/preferred-label
                      {:concept/replaced-by [:concept/id
-                                            {:concept/preferred-term [:term/base-form]}]}])
-
+                                            :concept/preferred-label ]}])
     ?inst
     :in $ ?since
     :where
@@ -73,16 +69,13 @@
 (defn get-deprecated-concepts-replaced-by-since [db date-time]
   (d/q show-deprecated-replaced-by-query db  date-time))
 
-(defn  get-db-hist [db] (d/history db))
+(defn get-db-hist [db] (d/history db))
 
 (defn group-by-transaction-and-entity [datoms]
   (group-by (juxt #(nth % 3) #(nth % 0)) datoms))
 
 (defn group-by-attribute [grouped-datoms]
   (map #(group-by second %) grouped-datoms))
-
-(defn filter-duplicate-preferred-term-datoms [[_ _ preferred-term-id _ operation _ _ preferred-term preferred-term-id-again cat]]
-  (= preferred-term-id preferred-term-id-again))
 
 (defn keep-after-update [[_ _ _ _ operation]]
   operation)
@@ -124,7 +117,7 @@
      :preferred-label preferred-label
      :deprecated true}))
 
-(defn create-event-updated-preferred-term [datoms-grouped-by-attribute]
+(defn create-event-updated-preferred-label [datoms-grouped-by-attribute]
   (let [datoms  (:concept/preferred-label datoms-grouped-by-attribute)
         datom-after  (filter keep-after-update datoms)
         [[_ _ _ transaction-id _ timestamp concept-id preferred-label type]] datom-after]
@@ -140,11 +133,11 @@
 Like replaced-by will return nil."
   (let [is-event-create-concept (is-event-create-concept? datoms-by-attibute)
         is-event-deprecated-concept (is-event-deprecated-concept? datoms-by-attibute)
-        is-event-update-preferred-term (is-event-update-preferred-label? datoms-by-attibute)]
+        is-event-update-preferred-label (is-event-update-preferred-label? datoms-by-attibute)]
     (cond
       is-event-create-concept (create-event-create-concept-from-datom datoms-by-attibute)
       is-event-deprecated-concept (create-event-deprecated-concept-from-datom datoms-by-attibute)
-      is-event-update-preferred-term (create-event-updated-preferred-term datoms-by-attibute))))
+      is-event-update-preferred-label (create-event-updated-preferred-label datoms-by-attibute))))
 
 (defn convert-history-to-events [datoms]
   (let [grouped-datoms (map second (group-by-transaction-and-entity datoms))
@@ -162,14 +155,14 @@ Like replaced-by will return nil."
            (convert-history-to-events
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
 
-(defn transform-event-result [{:keys [category transaction-id preferred-term timestamp concept-id event-type deprecated] }]
+(defn transform-event-result [{:keys [category transaction-id preferred-label timestamp concept-id event-type deprecated] }]
   {:eventType event-type
    :transactionId transaction-id,
    :timestamp timestamp,
    :concept (merge (if (true? deprecated) {:deprecated true} {}) ; deprecated optional
                    {:id concept-id,
                     :type (name category),
-                    :preferredLabel preferred-term})})
+                    :preferredLabel preferred-label})})
 
 (defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."
