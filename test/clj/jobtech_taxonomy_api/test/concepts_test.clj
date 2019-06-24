@@ -3,13 +3,14 @@
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
             [jobtech-taxonomy-api.db.core :as core]
+            [jobtech-taxonomy-api.db.concept :as concept]
             ))
 
 (test/use-fixtures :each util/fixture)
 
 (test/deftest ^:integration-concepts-test-0 concepts-test-0
   (test/testing "test concepts "
-    (core/assert-concept "skill" "cyklade" "cykla")
+    (concept/assert-concept "skill" "cyklade" "cykla")
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]
@@ -20,7 +21,7 @@
 
 (test/deftest ^:integration-concepts-test-1 concepts-test-1
   (test/testing "test concepts"
-    (core/assert-concept "skill2" "cyklade" "cykla2")
+    (concept/assert-concept "skill2" "cyklade" "cykla2")
     (let [[status body] (util/send-request-to-json-service
                           :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]

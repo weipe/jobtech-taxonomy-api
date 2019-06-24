@@ -171,24 +171,6 @@
 
     {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
-(defn assert-concept-part [type desc pref-term]
-  (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
-         tx        [{:db/id temp-id
-                     :term/base-form pref-term}
-                    {:concept/id (nano/generate-new-id-with-underscore)
-                     :concept/description desc
-                     :concept/category (keyword (str type))
-                     :concept/preferred-term temp-id
-                     :concept/alternative-terms #{temp-id}}]
-         result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
-        result))
-
-(defn assert-concept "" [type desc pref-term]
-  (let [result (assert-concept-part type desc pref-term)
-        timestamp (nth (first (:tx-data result)) 2)]
-
-    {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
-
 (def get-concepts-for-type-query
   '[:find (pull ?c
                 [:concept/id
