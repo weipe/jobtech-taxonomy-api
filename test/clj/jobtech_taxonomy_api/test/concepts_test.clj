@@ -3,7 +3,7 @@
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
             [jobtech-taxonomy-api.db.core :as core]
-            [jobtech-taxonomy-api.db.concept :as concept]
+            [jobtech-taxonomy-api.db.concepts :as concept]
             ))
 
 (test/use-fixtures :each util/fixture)
