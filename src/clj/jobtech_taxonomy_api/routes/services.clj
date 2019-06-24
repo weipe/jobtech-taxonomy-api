@@ -1,4 +1,5 @@
 (ns jobtech-taxonomy-api.routes.services
+  (:refer-clojure :exclude [type])
   (:require
    [ring.util.http-response :as response]
    [ring.middleware.json :refer [wrap-json-response]]
@@ -123,9 +124,6 @@
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Finds all concepts in a text."
        {:body (ie/parse-text text)})
-
-
-
      )
 
    (context "/v0/taxonomy/private" []
@@ -141,10 +139,10 @@
      ;; alternativeTerms (optional - kolla om/hur det görs)
      (POST "/concept"    []
        :query-params [type :- String
-                      description :- String
-                      preferredTerm :- String]
+                      definition :- String
+                      preferredLabel :- String]
        :summary      "Assert a new concept."
-       {:body (assert-concept type description preferredTerm)})
+       {:body (assert-concept type definition preferredLabel)})
 
      (POST "/replace-concept"    []
        :query-params [old-concept-id :- String

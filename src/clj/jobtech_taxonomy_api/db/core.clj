@@ -159,20 +159,17 @@
 
     {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
-(defn assert-concept-part [type desc pref-term]
-  (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
-         tx        [{:db/id temp-id
-                     :term/base-form pref-term}
-                    {:concept/id (nano/generate-new-id-with-underscore)
-                     :concept/description desc
-                     :concept/category (keyword (str type))
-                     :concept/preferred-term temp-id
-                     :concept/alternative-terms #{temp-id}}]
+(defn assert-concept-part [type definition preffered-label]
+  (let* [tx        [ {:concept/id (nano/generate-new-id-with-underscore)
+                     :concept/definition definition
+                     :concept/type type
+                     :concept/preferred-label preffered-label
+                     }]
          result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
         result))
 
-(defn assert-concept "" [type desc pref-term]
-  (let [result (assert-concept-part type desc pref-term)
+(defn assert-concept "" [type definition preffered-label]
+  (let [result (assert-concept-part type definition preffered-label)
         timestamp (nth (first (:tx-data result)) 2)]
 
     {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))

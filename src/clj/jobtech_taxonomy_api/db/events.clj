@@ -1,4 +1,5 @@
 (ns jobtech-taxonomy-api.db.events
+  (:refer-clojure :exclude [type])
   (:require
    [datomic.client.api :as d]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
@@ -6,12 +7,11 @@
    [mount.core :refer [defstate]]))
 
 (def show-concept-history
-  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?term ?pft ?cat
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type
     :where
     [?e :concept/id ?concept-id]
-    [?e :concept/preferred-term ?pft]
-    [?e :concept/category ?cat]
-    [?pft :term/base-form ?term]
+    [?e :concept/preferred-label ?preferred-label]
+    [?e :concept/type ?type]
     [?e ?a ?v ?tx ?added]
     [?a :db/ident ?aname]
     [?tx :db/txInstant ?inst]])
@@ -87,9 +87,9 @@
 (defn keep-after-update [[_ _ _ _ operation]]
   operation)
 
-(defn is-event-update-preferred-term? [datoms-grouped-by-attribute]
+(defn is-event-update-preferred-label? [datoms-grouped-by-attribute]
   "checks if op is not all true or false"
-  (if-let [datoms (:concept/preferred-term datoms-grouped-by-attribute)]
+  (if-let [datoms (:concept/preferred-label datoms-grouped-by-attribute)]
     (not (apply = (map #(nth % 4) datoms)))
     false))
 
@@ -106,43 +106,41 @@
 (defn create-event-create-concept-from-datom [datoms-grouped-by-attribute]
 
   "TODO fix potential bugfest, first is a bit sketchy"
-  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term _ cat]  (first (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute)))]
+  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-label type]  (first (:concept/preferred-label datoms-grouped-by-attribute))]
     {:event-type "CREATED"
      :transaction-id transaction-id
-     :category cat
+     :type type
      :timestamp timestamp
      :concept-id concept-id
-     :preferred-term preferred-term}))
+     :preferred-label preferred-label}))
 
 (defn create-event-deprecated-concept-from-datom [datoms-grouped-by-attribute]
-  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-term _ cat]  (first (:concept/deprecated datoms-grouped-by-attribute))]
+  (let [[_ _ _ transaction-id _ timestamp concept-id preferred-label type]  (first (:concept/deprecated datoms-grouped-by-attribute))]
     {:event-type "DEPRECATED"
      :transaction-id transaction-id
-     :category cat
+     :type type
      :timestamp timestamp
      :concept-id concept-id
-     :preferred-term preferred-term
+     :preferred-label preferred-label
      :deprecated true}))
 
 (defn create-event-updated-preferred-term [datoms-grouped-by-attribute]
-  (let [datoms (filter filter-duplicate-preferred-term-datoms (:concept/preferred-term datoms-grouped-by-attribute))
-        datom-before (filter #(not (keep-after-update %)) datoms)
+  (let [datoms  (:concept/preferred-label datoms-grouped-by-attribute)
         datom-after  (filter keep-after-update datoms)
-        [[_ _ _ _ _ timestamp concept-id old-preferred-term _ _]] datom-before
-        [[_ _ _ transaction-id _ _ _ new-preferred-term _ cat]] datom-after]
+        [[_ _ _ transaction-id _ timestamp concept-id preferred-label type]] datom-after]
     {:event-type "UPDATED"
      :transaction-id transaction-id
-     :category cat
+     :type type
      :timestamp timestamp
      :concept-id concept-id
-     :preferred-term new-preferred-term}))
+     :preferred-label preferred-label}))
 
 (defn determine-event-type [datoms-by-attibute]
   "This function will return nil events when the event is not CREATED, DEPRECATED or UPDATED.
 Like replaced-by will return nil."
   (let [is-event-create-concept (is-event-create-concept? datoms-by-attibute)
         is-event-deprecated-concept (is-event-deprecated-concept? datoms-by-attibute)
-        is-event-update-preferred-term (is-event-update-preferred-term? datoms-by-attibute)]
+        is-event-update-preferred-term (is-event-update-preferred-label? datoms-by-attibute)]
     (cond
       is-event-create-concept (create-event-create-concept-from-datom datoms-by-attibute)
       is-event-deprecated-concept (create-event-deprecated-concept-from-datom datoms-by-attibute)
@@ -150,8 +148,8 @@ Like replaced-by will return nil."
 
 (defn convert-history-to-events [datoms]
   (let [grouped-datoms (map second (group-by-transaction-and-entity datoms))
-        datoms-by-attibute (group-by-attribute grouped-datoms)
-        events (filter some? (map determine-event-type datoms-by-attibute))]
+        datoms-by-attribute (group-by-attribute grouped-datoms)
+        events (filter some? (map determine-event-type datoms-by-attribute))]
     events))
 
 (defn get-all-events [db]
