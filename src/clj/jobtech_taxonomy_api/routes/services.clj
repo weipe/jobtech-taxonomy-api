@@ -93,7 +93,7 @@
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
        (log/info (str "GET /concepts " "id:" id " preferredLabel:" preferredLabel " type:" type " deprecated:" deprecated " offset:" offset " limit:" limit))
-       (response/ok (find-concepts id preferredLabel type deprecated offset limit)))
+       (response/ok (concepts/find-concepts id preferredLabel type deprecated offset limit)))
 
      (GET "/search" []
        :query-params [q       :- String
@@ -120,7 +120,7 @@
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Return a list of all taxonomy types."
        (log/info "GET /concept/types")
-       (response/ok (get-all-taxonomy-types))))
+       (response/ok (get-all-taxonomy-types)))
 
      (POST "/parse-text"    []
        :query-params [text :- String]
@@ -153,12 +153,11 @@
                       definition :- String
                       preferredLabel :- String]
        :summary      "Assert a new concept."
-       {:body (assert-concept type definition preferredLabel)})
        :responses {200 {:schema {:message s/Str :timestamp Date }}
                    409 {:schema {:message s/Str}}
                    500 {:schema {:type s/Str, :message s/Str}}}
        (log/info "POST /concept")
-       (let [[result timestamp] (assert-concept type definition preferredLabel)]
+       (let [[result timestamp] (concepts/assert-concept type definition preferredLabel)]
          (if result
            (response/ok {:timestamp timestamp :message "OK"})
            (response/conflict { :message "Conflict with existing concept." } ))))
@@ -169,7 +168,7 @@
        :summary      "Replace old concept with a new concept."
        {:body (replace-deprecated-concept old-concept-id new-concept-id)})
 
-          (GET "/relation/graph/:relation-type" []
+     (GET "/relation/graph/:relation-type" []
        :path-params [relation-type :- String]
        :responses {200 {:schema s/Any}
                    500 {:schema {:type s/Str, :message s/Str}}}

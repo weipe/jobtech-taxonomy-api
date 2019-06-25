@@ -12,11 +12,12 @@
    [jobtech-taxonomy-api.db.events :refer :all]
    [jobtech-taxonomy-api.db.database-connection  :refer :all]
    [jobtech-taxonomy-api.db.api-util :refer :all]
+   [jobtech-taxonomy-api.db.concepts :as db-concepts]
    ))
 
 
 (defn retract-concept [id]
-  (let [found-concept (find-concept-by-id id)]
+  (let [found-concept (db-concepts/find-concepts id)]
     (if (or (= 0 (count found-concept))
             (get (ffirst found-concept) :concept/deprecated))
       false
@@ -110,20 +111,6 @@
 
     {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
-(defn assert-concept-part [type definition preferred-label]
-  (let* [tx        [ {:concept/id (nano/generate-new-id-with-underscore)
-                     :concept/definition definition
-                     :concept/type type
-                     :concept/preferred-label preferred-label
-                     }]
-         result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
-        result))
-
-(defn assert-concept "" [type definition preffered-label]
-  (let [result (assert-concept-part type definition preffered-label)
-        timestamp (nth (first (:tx-data result)) 2)]
-
-    {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
 (def get-all-taxonomy-types-query
   '[:find ?v :where [_ :concept/type ?v]])
@@ -152,4 +139,3 @@
 
 (defn show-deprecated-concepts-and-replaced-by [date-time]
   (get-deprecated-concepts-replaced-by-since (get-db) date-time))
-

@@ -84,12 +84,16 @@
     )
   )
 
-(defn find-concepts [id preferred-label type deprecated offset limit]
+(defn find-concepts
   "Beta for v0.9."
-  (let [result (d/q (fetch-concepts id preferred-label type deprecated offset limit))
-        parsed-result (parse-find-concept-datomic-result result)]
-    parsed-result
-    )
+  ([id preferred-label type deprecated offset limit]
+   (let [result (d/q (fetch-concepts id preferred-label type deprecated offset limit))
+         parsed-result (parse-find-concept-datomic-result result)]
+     parsed-result
+     ))
+  ([id]
+   (find-concepts id nil nil false nil nil)
+   )
   )
 
 (def find-concepts-schema
@@ -102,7 +106,7 @@
     }
    ])
 
-(defn assert-concept-part [type desc prefferred-label]
+(defn assert-concept-part [type desc preferred-label]
   (let* [tx        [ {:concept/id (nano/generate-new-id-with-underscore)
                      :concept/definition desc
                      :concept/type type
@@ -111,10 +115,10 @@
          result     (d/transact (get-conn) {:tx-data tx})]
         result))
 
-(defn assert-concept "" [type desc preffererd-label]
-  (let [existing (find-concepts nil preffererd-label type nil nil nil)]
+(defn assert-concept "" [type desc preferrerd-label]
+  (let [existing (find-concepts nil preferrerd-label type nil nil nil)]
     (if (> (count existing) 0)
       [false nil]
-      (let [result (assert-concept-part type desc preffererd-label)
+      (let [result (assert-concept-part type desc preferrerd-label)
             timestamp (if result (nth (first (:tx-data result)) 2) nil)]
         [result timestamp]))))
