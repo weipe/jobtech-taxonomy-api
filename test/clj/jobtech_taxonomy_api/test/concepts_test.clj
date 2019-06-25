@@ -15,16 +15,5 @@
                           :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]
                           :query-params [{:key "type", :val "skill"}])
-          found-concept (first (core/find-concept-by-preferred-term "cykla"))]
+          found-concept (first (concept/find-concepts nil "cykla" nil nil nil nil))]
       (test/is (= "cykla" (get found-concept :preferredLabel))))))
-
-
-(test/deftest ^:integration-concepts-test-1 concepts-test-1
-  (test/testing "test concepts"
-    (concept/assert-concept "skill2" "cyklade" "cykla2")
-    (let [[status body] (util/send-request-to-json-service
-                          :get "/v0/taxonomy/public/concepts"
-                          :headers [util/header-auth-user]
-                          :query-params [{:key "type", :val "skill"}])
-          found-concept (first (core/find-concept-by-preferred-term "cykla2"))]
-      (test/is (= "cykla2" (get found-concept :preferredLabel))))))
