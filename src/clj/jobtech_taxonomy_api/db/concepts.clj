@@ -1,6 +1,7 @@
 (ns jobtech-taxonomy-api.db.concepts
   (:require
    [datomic.client.api :as d]
+   [jobtech-taxonomy-database.nano-id :as nano]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.db.api-util :refer :all]
    [clojure.set :as set]
@@ -157,3 +158,23 @@
     (paginate-datomic-result result offset limit)
     )
   )
+
+(defn assert-concept-part [type desc pref-term]
+  (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
+         tx        [{:db/id temp-id
+                     :term/base-form pref-term}
+                    {:concept/id (nano/generate-new-id-with-underscore)
+                     :concept/description desc
+                     :concept/category (keyword (str type))
+                     :concept/preferred-term temp-id
+                     :concept/alternative-terms #{temp-id}}]
+         result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
+        result))
+
+(defn assert-concept "" [type desc pref-term]
+  (let [existing (find-concepts nil pref-term type nil nil nil)]
+    (if (> (count existing) 0)
+      [false nil]
+      (let [result (assert-concept-part type desc pref-term)
+            timestamp (if result (nth (first (:tx-data result)) 2) nil)]
+        [result timestamp]))))

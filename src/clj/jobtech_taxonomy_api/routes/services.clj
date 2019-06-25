@@ -141,7 +141,14 @@
                       description :- String
                       preferredTerm :- String]
        :summary      "Assert a new concept."
-       {:body (assert-concept type description preferredTerm)})
+       :responses {200 {:schema {:message s/Str :timestamp Date }}
+                   409 {:schema {:message s/Str}}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       (log/info "POST /concept")
+       (let [[result timestamp] (assert-concept type description preferredTerm)]
+         (if result
+           (response/ok {:timestamp timestamp :message "OK"})
+           (response/conflict { :message "Conflict with existing concept." } ))))
 
      (POST "/replace-concept"    []
        :query-params [old-concept-id :- String

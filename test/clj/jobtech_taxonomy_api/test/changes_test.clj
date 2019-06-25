@@ -2,6 +2,7 @@
   (:require [clojure.test :as test]
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
+            [jobtech-taxonomy-api.db.concepts :as concept]
             [jobtech-taxonomy-api.db.core :as core]
             ))
 
@@ -9,7 +10,7 @@
 
 (test/deftest ^:integration-changes-test-0 changes-test-0
   (test/testing "test event stream"
-    (core/assert-concept "skill" "cykla" "cykla")
+    (concept/assert-concept "skill" "cykla" "cykla")
     (let [[status body] (util/send-request-to-json-service
                          :get "/v0/taxonomy/public/changes"
                          :headers [util/header-auth-user]
@@ -24,7 +25,7 @@
 
 (test/deftest ^:integration-changes-test-1 changes-test-1
   (test/testing "test event stream"
-    (core/assert-concept "skill2" "cykla2" "cykla2")
+    (concept/assert-concept "skill2" "cykla2" "cykla2")
     (let [[status body] (util/send-request-to-json-service
                          :get "/v0/taxonomy/public/changes"
                          :headers [util/header-auth-user]
@@ -35,4 +36,3 @@
       (test/is (= "CREATED" (:eventType an-event)))
 
       (test/is (= "cykla2" (get found-concept :preferredLabel))))))
-
