@@ -1,5 +1,7 @@
 (ns jobtech-taxonomy-api.db.concepts
+  (:refer-clojure :exclude [type])
   (:require
+   [schema.core :as s]
    [datomic.client.api :as d]
    [jobtech-taxonomy-database.nano-id :as nano]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
@@ -7,174 +9,112 @@
    [clojure.set :as set]
    ))
 
-(def fetch-concepts-by-preferred-term-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?term
-    :where [?t :term/base-form ?term]
-    [?c :concept/preferred-term ?t]])
+(comment
+  "To understand the idea behind the following code read this blog post
+   https://grishaev.me/en/datomic-query/ "
+  )
 
-(def fetch-concepts-by-id-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?id
-    :where
-    [?c :concept/id ?id]])
-
-(def fetch-concepts-by-preferred-label-type-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label ?type ?deprecated
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    [?c :concept/category ?type]
-    [?c :concept/deprecated ?deprecated]
-    ])
+(def initial-concept-query
+  '{:find [(pull ?c [:concept/id
+                     :concept/type
+                     :concept/definition
+                     :concept/preferred-label
+                     :concept/deprecated
+                     ])]
+    :in [$]
+    :args []
+    :where []
+    :offset 0
+    :limit -1
+    })
 
 
-(def fetch-concepts-by-preferred-label-type-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label ?type
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    [?c :concept/category ?type]
-    ])
+(defn remap-query
+  [{args :args offset :offset limit :limit :as m}]
+  {:query (-> m
+              (dissoc :args)
+              (dissoc :offset)
+              (dissoc :limit)
+              )
+   :args args
+   :offset offset
+   :limit limit
+   }
+  )
 
-(def fetch-concepts-by-preferred-label-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label ?deprecated
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    [?c :concept/deprecated ?deprecated]
-    ])
+(defn fetch-concepts [id preferred-label type deprecated offset limit]
 
-(def fetch-concepts-by-type-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?type ?deprecated
-    :where
-    [?c :concept/category ?type]
-    [?c :concept/deprecated ?deprecated]
-    ])
+  (cond-> initial-concept-query
 
-(def fetch-concepts-by-type-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?type
-    :where
-    [?c :concept/category ?type]
-    ])
+    true
+    (update :args conj (get-db))
 
-(def fetch-concepts-by-preferred-label-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?label
-    :where
-    [?c :concept/preferred-term ?pt]
-    [?pt :term/base-form ?label]
-    ])
+    id
+    (-> (update :in conj '?id)
+        (update :args conj id)
+        (update :where conj '[?c :concept/id ?id])
+        )
 
-(def fetch-concepts-by-deprecated-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?deprecated
-    :where
-    [?c :concept/deprecated ?deprecated]
-    ])
+    preferred-label
+    (-> (update :in conj '?preferred-label)
+        (update :args conj preferred-label)
+        (update :where conj '[?c :concept/preferred-label ?preferred-label])
+        )
 
+    type
+    (-> (update :in conj '?type)
+        (update :args conj type)
+        (update :where conj '[?c :concept/type ?type])
+        )
 
-(defn fetch-concepts-choose-query [id preferred-label type deprecated]
-  (cond
-    id (d/q  fetch-concepts-by-id-query (get-db) id )
-    (and preferred-label  type deprecated) (d/q fetch-concepts-by-preferred-label-type-deprecated-query (get-db) preferred-label type deprecated)
-    (and preferred-label type) (d/q fetch-concepts-by-preferred-label-type-query (get-db) preferred-label type )
-    (and preferred-label deprecated) (d/q fetch-concepts-by-preferred-label-deprecated-query (get-db) preferred-label deprecated )
-    (and type deprecated) (d/q fetch-concepts-by-type-deprecated-query (get-db) type deprecated )
-    preferred-label (d/q fetch-concepts-by-preferred-label-query (get-db) preferred-label)
-    type (d/q fetch-concepts-by-type-query (get-db) type)
-    deprecated (d/q fetch-concepts-by-deprecated-query (get-db) deprecated)
-    :else "error"
+    deprecated
+    (-> (update :in conj '?deprecated)
+        (update :args conj deprecated)
+        (update :where conj '[?c :concept/deprecated ?deprecated])
+        )
+
+    offset
+    (assoc :offset offset)
+
+    limit
+    (assoc :limit limit)
+
+    true
+    remap-query
     )
   )
 
 (defn find-concepts [id preferred-label type deprecated offset limit]
   "Beta for v0.9."
-  (let [datomic-result (fetch-concepts-choose-query (empty-string-to-nil id)
-                                            (empty-string-to-nil preferred-label)
-                                            (keyword (empty-string-to-nil type))
-                                            deprecated)
-        result (parse-find-concept-datomic-result datomic-result)
-        ]
-    (paginate-datomic-result result offset limit)
+  (let [result (d/q (fetch-concepts id preferred-label type deprecated offset limit))
+        parsed-result (parse-find-concept-datomic-result result)]
+    parsed-result
     )
   )
 
-(defn assert-concept-part [type desc pref-term]
-  (let* [temp-id   (format "%s-%s-%s" type desc pref-term)
-         tx        [{:db/id temp-id
-                     :term/base-form pref-term}
-                    {:concept/id (nano/generate-new-id-with-underscore)
-                     :concept/description desc
-                     :concept/category (keyword (str type))
-                     :concept/preferred-term temp-id
-                     :concept/alternative-terms #{temp-id}}]
-         result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
+(def find-concepts-schema
+  "The response schema for /concepts. Beta for v0.9."
+  [{ :id s/Str
+    :type s/Str
+    :definition s/Str
+    :preferredLabel s/Str
+    (s/optional-key :deprecated) s/Bool
+    }
+   ])
+
+(defn assert-concept-part [type desc prefferred-label]
+  (let* [tx        [ {:concept/id (nano/generate-new-id-with-underscore)
+                     :concept/definition desc
+                     :concept/type type
+                     :concept/preferred-label preferred-label
+                     }]
+         result     (d/transact (get-conn) {:tx-data tx})]
         result))
 
-(defn assert-concept "" [type desc pref-term]
-  (let [existing (find-concepts nil pref-term type nil nil nil)]
+(defn assert-concept "" [type desc preffererd-label]
+  (let [existing (find-concepts nil preffererd-label type nil nil nil)]
     (if (> (count existing) 0)
       [false nil]
-      (let [result (assert-concept-part type desc pref-term)
+      (let [result (assert-concept-part type desc preffererd-label)
             timestamp (if result (nth (first (:tx-data result)) 2) nil)]
         [result timestamp]))))

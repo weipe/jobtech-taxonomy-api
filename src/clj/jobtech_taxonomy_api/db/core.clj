@@ -14,67 +14,6 @@
    [jobtech-taxonomy-api.db.api-util :refer :all]
    ))
 
-#_(defstate conn
-    :start (-> env :database-url d/connect)
-    :stop (-> conn .release))
-
-(def find-concept-by-preferred-term-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    :concept/deprecated
-                    {:concept/preferred-term [:term/base-form]}
-                    {:concept/referring-terms [:term/base-form]}
-                    ] )
-    :in $ ?term
-    :where [?t :term/base-form ?term]
-    [?c :concept/preferred-term ?t]])
-
-(def find-concept-by-preferred-term-schema
-  "The response schema for the query below."
-  {:id s/Str
-   :definition s/Str
-   :instanceType s/Str
-   (s/optional-key :deprecated) s/Bool})
-
-(defn find-concept-by-preferred-term [term]
-  "Lookup concepts by term. Special term '___THROW_EXCEPTION' throws an exception, handy for testning error handling."
-  {:pre  [(is (and (not (nil? term)) (> (count term) 0))  "supply a non-empty string argument")]}
-  (if (= term "___THROW_EXCEPTION")
-    (throw (NullPointerException. "Throwing test exception.")))
-  (let [result (d/q find-concept-by-preferred-term-query (get-db) term)]
-    (parse-find-concept-datomic-result result)
-    )
-  )
-
-(def find-concept-by-id-query
-  '[:find (pull ?c
-                [:concept/id
-                 :concept/description
-                 :concept/deprecated
-                 {:concept/preferred-term [:term/base-form]}
-                 {:concept/referring-terms [:term/base-form]}])
-    :in $ ?id
-    :where [?c :concept/id ?id]])
-
-(defn find-concept-by-id [id]
-  (d/q find-concept-by-id-query (get-db) id))
-
-(def find-concepts-schema
-  "The response schema for /concepts. Beta for v0.9."
-    [{ :id s/Str
-       :type s/Str
-       :definition s/Str
-       :preferredLabel s/Str
-       (s/optional-key :deprecated) s/Bool
-      }
-     ])
-
-#_(defn find-concepts [id preferred-label type deprecated offset limit]
-  "Beta for v0.9."
-  '({ :id "Vpaw_yX7_BNY",
-      :preferredLabel "Sportdykning",
-      :type :skill }))
 
 (defn retract-concept [id]
   (let [found-concept (find-concept-by-id id)]
@@ -106,18 +45,18 @@
 (def get-relation-graph-from-concept-query
   '[:find (pull ?child [:db/id
                         :concept/id
-                        {:concept/preferred-term [:term/base-form]}])
+                        :concept/preferred-label])
     :in $ % ?relation-type ?id :where
     [?parent :concept/id ?id]
     (related-concepts ?parent ?child ?relation-type)])
 
 (def map-id-to-term-query
-  '[:find ?term
+  '[:find ?preferred-label
     :in $ ?id
     :where
     [?ce :concept/id ?id]
-    [?ce :concept/preferred-term ?te]
-    [?te :term/base-form ?term]])
+    [?ce :concept/preferred-label ?preferred-label]
+    ])
 
 ; (find-concept-by-id "aqxj_t1i_SxL") ; Sydsudan
 ; (find-concept-by-id "Gk4Z_5LP_v5G") ; Nordafrika
@@ -147,7 +86,7 @@
 
 (defn get-relation-graph-from-concept [relation-type id]
   (letfn [(format-answer [[list]]
-            { "name" (get-in list [:concept/preferred-term :term/base-form]) "id" (get-in list [:concept/id])})]
+            { "name" (get-in list [:concept/preferred-label]) "id" (get-in list [:concept/id])})]
     (let [lookup (d/q get-relation-graph-from-concept-query (get-db) get-relation-graph-from-concept-query-rules relation-type id)]
       { "name" (map-id-to-term id), "id" id, "children" (map #(format-answer %) lookup) })))
 
@@ -171,21 +110,23 @@
 
     {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
-(def get-concepts-for-type-query
-  '[:find (pull ?c
-                [:concept/id
-                 :concept/description
-                 :concept/category
-                 {:concept/preferred-term [:term/base-form]}
-                 {:concept/referring-terms [:term/base-form]}])
-    :in $ ?type
-    :where [?c :concept/category ?type]])
+(defn assert-concept-part [type definition preferred-label]
+  (let* [tx        [ {:concept/id (nano/generate-new-id-with-underscore)
+                     :concept/definition definition
+                     :concept/type type
+                     :concept/preferred-label preferred-label
+                     }]
+         result     (d/transact (get-conn) {:tx-data (vec (concat tx))})]
+        result))
 
-(defn get-concepts-for-type [type]
-  (d/q get-concepts-for-type-query (get-db) (keyword type)))
+(defn assert-concept "" [type definition preffered-label]
+  (let [result (assert-concept-part type definition preffered-label)
+        timestamp (nth (first (:tx-data result)) 2)]
+
+    {:msg (if result {:timestamp timestamp :status "OK"} {:status "ERROR"})}))
 
 (def get-all-taxonomy-types-query
-  '[:find ?v :where [_ :concept/category ?v]])
+  '[:find ?v :where [_ :concept/type ?v]])
 
 (defn get-all-taxonomy-types "Return a list of taxonomy types." []
   (->> (d/q get-all-taxonomy-types-query (get-db))
@@ -193,43 +134,6 @@
        (flatten)
        (map name)))
 
-(def show-term-history-query
-  '[:find ?e ?aname ?v ?tx ?added
-    :where
-    [?e ?a ?v ?tx ?added]
-    [?a :db/ident ?aname]])
-
-(defn ^:private format-result [result-list]
-  (->> result-list
-       (sort-by first)
-       (partition-by #(let [[entity col value tx is-added] %] entity)) ; group by entity for better readability
-;; The rest is for placing the result vectors into neat,
-;; self-explanatory hashmaps - suitable for jsonifying later
-       (map (fn [entity-group]
-              (map (fn [entity]
-                     (let [[ent col value tx is-added] entity]
-                       {:entity ent :col col :value value :tx tx :op (if is-added 'add 'retract)}))
-                   entity-group)))))
-
-(defn ^:private show-term-history-back [q db]
-  (->>
-   (d/q q db)
-   (format-result)))
-
-(defn show-term-history []
-  (show-term-history-back show-term-history-query (d/history (get-db))))
-
-(def show-concept-events-schema
-  "The response schema for the query below."
-  [{:event-type s/Str
-    :transaction-id s/Int
-    :timestamp java.util.Date
-    :concept-id s/Str
-    :category s/Keyword
-    (s/optional-key :preferred-term) s/Str
-    (s/optional-key :old-preferred-term) s/Str
-    (s/optional-key :new-preferred-term) s/Str
-    (s/optional-key :deprecated) s/Bool}])
 
 (def show-changes-schema
   "The response schema for /changes. Beta for v0.9."
@@ -241,11 +145,6 @@
               (s/optional-key :deprecated) s/Bool
               (s/optional-key :preferredLabel) s/Str }}])
 
-(defn show-concept-events []
-  (get-all-events (get-db)))
-
-(defn show-concept-events-since [date-time]
-  (get-all-events-since (get-db) date-time))
 
 (defn show-changes-since [date-time offset limit]
   "Show changes since a specific time. Beta for v0.9."
@@ -254,105 +153,3 @@
 (defn show-deprecated-concepts-and-replaced-by [date-time]
   (get-deprecated-concepts-replaced-by-since (get-db) date-time))
 
-(def show-term-history-since-query
-  '[:find ?e ?aname ?v ?tx ?added
-    :in $ ?since
-    :where
-    [?e  ?a ?v ?tx ?added]
-    [?a  :db/ident ?aname]
-    [?tx :db/txInstant ?created-at]
-    [(< ?since ?created-at)]])
-
-(defn show-term-history-since [date-time]
-  (->>
-   (d/q show-term-history-since-query
-        (get-db)
-        date-time)
-   (format-result)))
-
-(defn ignore-case [string]
-  (str "(?i:.*" string  ".*)"))
-
-(def find-concepts-by-term-start-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    {:concept/preferred-term [:term/base-form]}])
-    :in $ ?letter
-    :where [?c :concept/preferred-term ?t]
-    [?t :term/base-form ?term]
-    (not [?c :concept/deprecated true])
-    ;;[(.startsWith ^String ?term ?letter)]
-    [(.matches ^String ?term ?letter)]])
-
-
-
-(def find-concepts-by-term-start-type-query
-  '[:find (pull ?c [:concept/id
-                    :concept/description
-                    :concept/category
-                    {:concept/preferred-term [:term/base-form]}])
-    :in $ ?letter ?type
-    :where
-    [?c :concept/category ?type]
-    [?c :concept/preferred-term ?t]
-    [?t :term/base-form ?term]
-    (not [?c :concept/deprecated true])
-    [(.matches ^String ?term ?letter)]])
-
-
-(def get-concepts-by-term-start-schema
-  "The response schema for the query below."
-  [{:id s/Str
-    :definition s/Str
-    :type s/Str
-    (s/optional-key :preferredLabel) s/Str}])
-
-
-(defn get-concepts-by-term-start [letter]
-  (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-query (get-db) (ignore-case letter)))
-  )
-
-(defn get-concepts-by-term-start-type [letter type]
-  (parse-find-concept-datomic-result (d/q find-concepts-by-term-start-type-query (get-db) (ignore-case letter) type))
-  )
-
-
-#_(def get-concepts-by-term-start-schema
-  "The response schema for the query below. Beta for v0.9."
-  [{:id s/Str
-    :definition s/Str
-    :preferredLabel s/Str
-    :type s/Str}])
-
-
-#_(defn get-concepts-by-search [q type offset limit]
-  "Beta for v0.9."
-  '({ :id "Vpaw_yX7_BNY"
-     :preferredLabel "Sportdykning"
-     :type :skill }))
-
-
-
-(comment
-  (defn get-concepts [id label type]
-
-    cond  iff id
-
-
-    )
-
-  )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-
-;;;;;;;;;;; search
-
-(defn get-concepts-by-search [q type offset limit]
-  "Beta for v0.9."
-  (let [result (cond (and (empty-string-to-nil q) (empty-string-to-nil type))
-                     (get-concepts-by-term-start-type q (keyword type))
-                     (empty-string-to-nil q) (get-concepts-by-term-start q)
-                     :else "error" )]
-    (paginate-datomic-result result offset limit)))

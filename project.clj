@@ -38,7 +38,9 @@
                  [ring/ring-defaults "0.3.2"]
                  [ring/ring-json "0.4.0"]
                  [selmer "1.12.5"]
-                 [org.clojure/tools.logging "0.4.1"]]
+                 [org.clojure/tools.logging "0.4.1"]
+                 [camel-snake-kebab "0.4.0"]
+                 ]
 
   :min-lein-version "2.0.0"
 

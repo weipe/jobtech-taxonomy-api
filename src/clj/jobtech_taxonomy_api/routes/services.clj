@@ -1,4 +1,5 @@
 (ns jobtech-taxonomy-api.routes.services
+  (:refer-clojure :exclude [type])
   (:require
    [ring.util.http-response :as response]
    [ring.middleware.json :refer [wrap-json-response]]
@@ -14,7 +15,9 @@
    [clj-time.coerce :as c]
    [jobtech-taxonomy-api.db.core :refer :all]
    [jobtech-taxonomy-api.middleware :as middleware]
-   [jobtech-taxonomy-api.db.concepts :refer :all]
+   [jobtech-taxonomy-api.db.concepts :as concepts]
+   [jobtech-taxonomy-api.db.search :as search]
+   [jobtech-taxonomy-api.db.information-extraction :as ie]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
@@ -69,8 +72,8 @@
 
      (GET "/changes" []
        :query-params [fromDateTime :- String
-                      {offset       :- Long 0}
-                      {limit        :- Long 0}]
+                      {offset       :- Long nil}
+                      {limit        :- Long nil}]
        :responses {200 {:schema show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
@@ -78,15 +81,15 @@
        (response/ok (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)))
 
      (GET "/concepts"    []
-       :query-params [{id :- String ""}
-                      {preferredLabel :- String ""}
-                      {type :- String ""}
+       :query-params [{id :- String nil}
+                      {preferredLabel :- String nil}
+                      {type :- String nil}
                       {deprecated :- Boolean false}
-                      {offset :- Long 0}
-                      {limit :- Long 0}
+                      {offset :- Long nil}
+                      {limit :- Long nil}
                       ]
 
-       :responses {200 {:schema find-concepts-schema}
+       :responses {200 {:schema concepts/find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
        (log/info (str "GET /concepts " "id:" id " preferredLabel:" preferredLabel " type:" type " deprecated:" deprecated " offset:" offset " limit:" limit))
@@ -94,14 +97,14 @@
 
      (GET "/search" []
        :query-params [q       :- String
-                      {type   :- String ""}
-                      {offset :- Long 0}
-                      {limit  :- Long 0}]
-       :responses {200 {:schema get-concepts-by-term-start-schema}
+                      {type   :- String nil}
+                      {offset :- Long nil}
+                      {limit  :- Long nil}]
+       :responses {200 {:schema search/get-concepts-by-search-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "get concepts by part of string"
+       :summary      "Autocomplete from query string"
        (log/info (str "GET /search q:" q " type:" type " offset:" offset " limit:" limit))
-       (response/ok (get-concepts-by-search q type offset limit)))
+       (response/ok (search/get-concepts-by-search q type offset limit)))
 
      (GET "/deprecated-concept-history-since" []
        :query-params [date-time :- String]
@@ -118,6 +121,15 @@
        :summary "Return a list of all taxonomy types."
        (log/info "GET /concept/types")
        (response/ok (get-all-taxonomy-types))))
+
+     (POST "/parse-text"    []
+       :query-params [text :- String]
+       :responses {200 {:schema [ s/Any]}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Finds all concepts in a text."
+       {:body (ie/parse-text text)})
+     )
+
 
    (context "/v0/taxonomy/private" []
      :tags ["private"]
@@ -138,14 +150,15 @@
      ;; alternativeTerms (optional - kolla om/hur det görs)
      (POST "/concept"    []
        :query-params [type :- String
-                      description :- String
-                      preferredTerm :- String]
+                      definition :- String
+                      preferredLabel :- String]
        :summary      "Assert a new concept."
+       {:body (assert-concept type definition preferredLabel)})
        :responses {200 {:schema {:message s/Str :timestamp Date }}
                    409 {:schema {:message s/Str}}
                    500 {:schema {:type s/Str, :message s/Str}}}
        (log/info "POST /concept")
-       (let [[result timestamp] (assert-concept type description preferredTerm)]
+       (let [[result timestamp] (assert-concept type definition preferredLabel)]
          (if result
            (response/ok {:timestamp timestamp :message "OK"})
            (response/conflict { :message "Conflict with existing concept." } ))))
