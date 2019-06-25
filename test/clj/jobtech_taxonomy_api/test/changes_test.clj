@@ -3,6 +3,7 @@
             [jobtech-taxonomy-api.test.test-utils :as util]
             [jobtech-taxonomy-api.db.events :as events]
             [jobtech-taxonomy-api.db.core :as core]
+            [jobtech-taxonomy-api.db.concepts :as db-concepts]
             ))
 
 (test/use-fixtures :each util/fixture)
@@ -15,7 +16,7 @@
                          :headers [util/header-auth-user]
                          :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
           an-event (first body)
-          found-concept (first (core/find-concept-by-preferred-term "cykla"))]
+          found-concept (first (db-concepts/find-concepts nil "cykla" "skill" false 0 1))]
 
       (test/is (= "CREATED" (:eventType an-event)))
 
@@ -30,7 +31,7 @@
                          :headers [util/header-auth-user]
                          :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
           an-event (first body)
-          found-concept (first (core/find-concept-by-preferred-term "cykla2"))]
+          found-concept (first (db-concepts/find-concepts nil "cykla2" "skill2" false 0 1))]
 
       (test/is (= "CREATED" (:eventType an-event)))
 

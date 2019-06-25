@@ -72,8 +72,8 @@
 
      (GET "/changes" []
        :query-params [fromDateTime :- String
-                      {offset       :- Long 0}
-                      {limit        :- Long 0}]
+                      {offset       :- Long nil}
+                      {limit        :- Long nil}]
        :responses {200 {:schema show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."

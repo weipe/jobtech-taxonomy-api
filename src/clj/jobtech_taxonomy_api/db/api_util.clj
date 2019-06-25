@@ -7,9 +7,6 @@
 (defn rename-concept-keys-for-api [concept]
   (set/rename-keys concept {:concept/preferred-label :preferredLabel, :concept/id :id, :concept/definition :definition, :concept/type :type :concept/deprecated :deprecated}))
 
-(defn lift-term [concept]
-  (assoc (dissoc concept :preferred-term)
-         :concept/preferred-term (get-in concept [:concept/preferred-term :term/base-form] )))
 
 (defn parse-find-concept-datomic-result [result]
   (->> result
@@ -18,29 +15,12 @@
        )
   )
 
-
-
-(defmacro pagination
-  "Pagination mimicking the MySql LIMIT"
-  ([coll start-from quantity]
-   `(take ~quantity (drop ~start-from ~coll)))
-  ([coll quantity]
-   `(pagination ~coll 0 ~quantity)))
-
-
-(defn empty-string-to-nil [string]
-  (if (seq string)
-    string
-    nil
-    )
-  )
-
-(defn paginate-datomic-result [result offset limit]
+(defn pagination
+  [coll offset limit]
   (cond
-    (and (= 0 offset) (= 0 limit)) (pagination result 0 100)
-    (and offset limit) (pagination result offset limit)
-    offset (drop offset result)
-    limit (take limit result)
-    :else (pagination result 0 100)
+    (and coll offset limit) (take limit (drop offset coll))
+    (and coll limit) (take limit coll)
+    (and coll offset) (drop offset coll)
+    :else coll
     )
   )

@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [type])
   (:require
    [datomic.client.api :as d]
+   [jobtech-taxonomy-api.db.api-util :as u]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.config :refer [env]]
    [mount.core :refer [defstate]]))
@@ -33,9 +34,6 @@
   )
 
 
-
-
-
 #_(def show-concept-history-since-transaction-query
   '[:find ?e ?aname ?v ?tx ?added ?concept-id ?term ?pft ?cat
     :in $ ?fromtx
@@ -54,7 +52,7 @@
 (def show-deprecated-replaced-by-query
   '[:find (pull ?c
                     [:concept/id
-                     :concept/description
+                     :concept/definition
                      :concept/preferred-label
                      {:concept/replaced-by [:concept/id
                                             :concept/preferred-label ]}])
@@ -155,18 +153,18 @@ Like replaced-by will return nil."
            (convert-history-to-events
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
 
-(defn transform-event-result [{:keys [category transaction-id preferred-label timestamp concept-id event-type deprecated] }]
+(defn transform-event-result [{:keys [type transaction-id preferred-label timestamp concept-id event-type deprecated] }]
   {:eventType event-type
    :transactionId transaction-id,
    :timestamp timestamp,
    :concept (merge (if (true? deprecated) {:deprecated true} {}) ; deprecated optional
                    {:id concept-id,
-                    :type (name category),
+                    :type type,
                     :preferredLabel preferred-label})})
 
 (defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."
-  (map transform-event-result  (get-all-events-since db date-time)))
+  (u/pagination  (map transform-event-result  (get-all-events-since db date-time))  offset limit))
 
 #_(defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."
