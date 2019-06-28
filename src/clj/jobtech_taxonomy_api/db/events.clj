@@ -34,6 +34,45 @@
   )
 
 
+(def show-concept-history-since-version-query
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type ?deprecated
+    :in $ ?from-version ?to-version
+    :where
+
+    [?e :concept/preferred-label ?preferred-label]
+    [?e :concept/id ?concept-id]
+    [?e :concept/type ?type]
+    [(get-else $ ?e :concept/deprecated false) ?deprecated]
+    [?e ?a ?v ?tx ?added]
+    [?tx :db/txInstant ?inst]
+    [?fv :taxonomy-version/id ?from-version ?from-version-tx]
+    [?from-version-tx :db/txInstant ?from-version-inst]
+    [(< ?from-version-inst ?inst)]
+    [?tv :taxonomy-version/id ?to-version ?to-version-tx]
+    [?to-version-tx :db/txInstant ?to-version-inst]
+    [(> ?to-version-inst ?inst)]
+    [?a :db/ident ?aname]
+    ]
+  )
+
+(def show-version-instance-ids
+  '[:find ?inst ?version
+    :in $
+    :where
+    [?t :taxonomy-version/id ?version ?inst]
+    ]
+  )
+
+#_(def show-version-hist
+  '[:find ?v ?version-inst
+    :in $ ?version
+    :where [?v :taxonomy-version/id ?version ?version-inst]
+    ]
+  )
+
+
+
+
 #_(def show-concept-history-since-transaction-query
   '[:find ?e ?aname ?v ?tx ?added ?concept-id ?term ?pft ?cat
     :in $ ?fromtx
@@ -143,6 +182,25 @@ Like replaced-by will return nil."
         events (filter some? (map determine-event-type datoms-by-attribute))]
     events))
 
+
+;; (d/q show-version-instance-ids (get-db))
+(comment
+
+  (d/q show-version-instance-ids (get-db))
+  [[13194139533328 68] [13194139533330 69] [13194139533326 67]]
+
+  stoppa in ditt värde i listan ovan
+  sortera listan på transactions id:n
+  ta index för ditt värde ut listan
+  stega upp ett index för att få nästföljande transaktionsid med tillhörande taxonomy-versionsid
+
+
+  )
+
+(defn convert-transaction-id-to-version-id [events]
+  (let [])
+  )
+
 (defn get-all-events [db]
   (sort-by :transaction-id
            (convert-history-to-events
@@ -152,6 +210,11 @@ Like replaced-by will return nil."
   (sort-by :transaction-id
            (convert-history-to-events
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
+
+(defn get-all-events-between-versions [db fromt-version to-version]
+
+  )
+
 
 (defn transform-event-result [{:keys [type transaction-id preferred-label timestamp concept-id event-type deprecated] }]
   {:eventType event-type
@@ -174,3 +237,34 @@ Like replaced-by will return nil."
      :concept { :id "Vpaw_yX7_BNY",
                :preferredLabel "Sportdykning",
                :type :skill }}))
+
+
+
+(comment
+
+
+  ;; (d/transact (get-conn) {:tx-data [{:taxonomy-version/id 67}]})
+
+  ;; (d/q '[:find (pull ?v [*])  :in $ :where [?v :taxonomy-version/id]] (get-db) )
+
+  (def get-version
+    '[:find ?e
+      :in $
+      :where [?e :taxonomy-version/id 67]
+      ]
+    )
+
+  (defn get-verion-67-entity []
+    (ffirst (d/q get-version (get-db))))
+
+  (defn convert []
+    (let [version-db-id (get-verion-67-entity)]
+      [{:db/id version-db-id
+        :taxonomy-version/id 68}]
+      )
+
+    )
+
+  ;; (d/transact (get-conn) {:tx-data [{:taxonomy-version/id 67}]})
+
+  )
