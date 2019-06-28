@@ -49,12 +49,12 @@
         ;; database engine is ready creating the database.
         (loop [acc 0]
           (cond
-            (>= acc 10) (throw (Exception. "Database cannot be initialised"))
+            (>= acc 30) (throw (Exception. "Database cannot be initialised"))
             :else (do
                     (if (= "DATABASE-DOWN"
                            (try
                              (db/init-new-db (db/get-conn config))
-                             (Thread/sleep 100)
+                             (Thread/sleep 200)
                              "DATABASE-UP"
                              (catch Exception e "DATABASE-DOWN")))
                       (recur (+ acc 1))
