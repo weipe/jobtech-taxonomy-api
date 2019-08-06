@@ -18,6 +18,7 @@
    [jobtech-taxonomy-api.db.concepts :as concepts]
    [jobtech-taxonomy-api.db.search :as search]
    [jobtech-taxonomy-api.db.information-extraction :as ie]
+   [jobtech-taxonomy-api.db.versions :as v]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
@@ -128,6 +129,18 @@
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Finds all concepts in a text."
        {:body (ie/parse-text text)})
+
+     (GET "/versions" []
+       :query-params []
+       :responses {200 {:schema [    {:timestamp java.util.Date
+                                      :version s/Int
+                                      }]}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Return a list of all Taxonomy versions."
+       (log/info "GET /versions")
+       (response/ok (v/get-all-versions))
+       )
+
      )
 
 
@@ -167,6 +180,22 @@
                       new-concept-id :- String]
        :summary      "Replace old concept with a new concept."
        {:body (replace-deprecated-concept old-concept-id new-concept-id)})
+
+     (POST "/versions" []
+       :query-params [new-version-id :- Long]
+       :responses {200 {:schema  {:timestamp java.util.Date
+                                  :version s/Int
+                                  :message s/Str
+                                  }}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Creates a new version tag in the database."
+       (log/info (str "POST /versions" new-version-id))
+
+       (let [result (v/create-new-version new-version-id)]
+         (if result
+           (response/ok (merge result {:message "A new version of the Taxonomy was created."}))
+           (response/unprocessable-entity! {:message (str new-version-id " is not the next valid version id!")})
+           )))
 
      (GET "/relation/graph/:relation-type" []
        :path-params [relation-type :- String]
