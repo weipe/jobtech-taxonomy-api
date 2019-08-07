@@ -191,8 +191,6 @@ Like replaced-by will return nil."
   ta index för ditt värde ut listan
   stega upp ett index för att få nästföljande transaktionsid med tillhörande taxonomy-versionsid
 
-
-
   ...
   Blås databasen.
 
@@ -203,7 +201,6 @@ Like replaced-by will return nil."
   4 updatera gammel java, sätt den till deprecated
   5. spara version 68
   6.
-
 
   1. databas tom
   2. skapa första versions tagg i tomma databasen.
@@ -216,8 +213,14 @@ Like replaced-by will return nil."
 
   )
 
-(defn convert-transaction-id-to-version-id [events]
-  (let [])
+(defn convert-transaction-id-to-version-id [versions-with-transatcion-ids transaction-id]
+  (let [;; versions (d/q show-version-instance-ids (get-db))
+        sorted-versions (sort-by first (conj versions-with-transatcion-ids [transaction-id]))
+        index-of-next-element-to-transaction-id (.indexOf  sorted-versions [transaction-id])
+        version-id (second (nth sorted-versions (inc index-of-next-element-to-transaction-id)))
+        ]
+    version-id
+    )
   )
 
 (defn get-all-events [db]
@@ -230,9 +233,27 @@ Like replaced-by will return nil."
            (convert-history-to-events
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
 
+
+
+(defn convert-events-transaction-ids-to-version-ids [events]
+  (let [versions (d/q show-version-instance-ids (get-db))]
+    (map (fn [event]
+           (let [version-id (convert-transaction-id-to-version-id  versions  (:transaction-id event))
+                 event-with-version-id (merge event {:version-id version-id})
+                 ]
+             (-> event-with-version-id
+                 (dissoc :transaction-id)
+                 (dissoc :timestamp)  ;; TODO never include timestamp in the first place
+                 )
+             ))
+         events)
+    )
+  )
+
 (defn get-all-events-between-versions "inclusive" [db from-version to-version]
-  (convert-history-to-events
-   (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version))
+  (convert-events-transaction-ids-to-version-ids
+   (convert-history-to-events
+    (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version)))
   )
 
 (defn get-all-events-from-version "inclusive" [])
