@@ -36,18 +36,17 @@
 
 (def show-concept-history-since-version-query
   '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type ?deprecated
-    :in $ ?from-version ?to-version
+    :in $ ?one-version-before-from-version ?to-version
     :where
-
     [?e :concept/preferred-label ?preferred-label]
     [?e :concept/id ?concept-id]
     [?e :concept/type ?type]
     [(get-else $ ?e :concept/deprecated false) ?deprecated]
     [?e ?a ?v ?tx ?added]
     [?tx :db/txInstant ?inst]
-    [?fv :taxonomy-version/id ?from-version ?from-version-tx]
-    [?from-version-tx :db/txInstant ?from-version-inst]
-    [(< ?from-version-inst ?inst)]
+    [?fv :taxonomy-version/id ?one-version-before-from-version ?one-version-before-from-version-tx]
+    [?one-version-before-from-version-tx :db/txInstant ?one-version-before-from-version-inst]
+    [(< ?one-version-before-from-version-inst ?inst)]
     [?tv :taxonomy-version/id ?to-version ?to-version-tx]
     [?to-version-tx :db/txInstant ?to-version-inst]
     [(> ?to-version-inst ?inst)]
@@ -185,15 +184,35 @@ Like replaced-by will return nil."
 
 ;; (d/q show-version-instance-ids (get-db))
 (comment
-
   (d/q show-version-instance-ids (get-db))
   [[13194139533328 68] [13194139533330 69] [13194139533326 67]]
-
   stoppa in ditt värde i listan ovan
   sortera listan på transactions id:n
   ta index för ditt värde ut listan
   stega upp ett index för att få nästföljande transaktionsid med tillhörande taxonomy-versionsid
 
+
+
+  ...
+  Blås databasen.
+
+  Skapa 3 test transactioner
+  1 spara version 66 i tom databas !!
+  2 Spara conceptet gammel-java
+  3 spara version 67
+  4 updatera gammel java, sätt den till deprecated
+  5. spara version 68
+  6.
+
+
+  1. databas tom
+  2. skapa första versions tagg i tomma databasen.
+  3. redaktionen lägger in saker i databasen.
+  4. Redaktionen skapar en version av all som tidigare funnits i databasen, dvs allt innan versions-transaktionen fram till versionen innan.
+  5. redaktionen lägger in mer data.
+  6. skapar ny version.
+
+  Hämta transaktioner från (från-version - 1) till transaktioner tidigare än  (till-version)
 
   )
 
@@ -211,8 +230,9 @@ Like replaced-by will return nil."
            (convert-history-to-events
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
 
-(defn get-all-events-between-versions [db fromt-version to-version]
-
+(defn get-all-events-between-versions "inclusive" [db from-version to-version]
+  (convert-history-to-events
+   (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version))
   )
 
 

@@ -22,18 +22,3 @@
       (test/is (= "CREATED" (:eventType an-event)))
 
       (test/is (= "cykla" (get found-concept :preferredLabel))))))
-
-
-(test/deftest ^:integration-changes-test-1 changes-test-1
-  (test/testing "test event stream"
-    (concept/assert-concept "skill2" "cykla2" "cykla2")
-    (let [[status body] (util/send-request-to-json-service
-                         :get "/v0/taxonomy/public/changes"
-                         :headers [util/header-auth-user]
-                         :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
-          an-event (first body)
-          found-concept (first (db-concepts/find-concepts nil "cykla2" "skill2" false 0 1))]
-
-      (test/is (= "CREATED" (:eventType an-event)))
-
-      (test/is (= "cykla2" (get found-concept :preferredLabel))))))
