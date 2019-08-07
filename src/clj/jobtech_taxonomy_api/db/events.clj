@@ -62,6 +62,15 @@
     ]
   )
 
+(def show-latest-version-id
+  '[:find (max ?version)
+    :in $
+    :where
+    [?t :taxonomy-version/id ?version]
+    ]
+  )
+
+
 #_(def show-version-hist
   '[:find ?v ?version-inst
     :in $ ?version
@@ -241,10 +250,7 @@ Like replaced-by will return nil."
            (let [version-id (convert-transaction-id-to-version-id  versions  (:transaction-id event))
                  event-with-version-id (merge event {:version-id version-id})
                  ]
-             (-> event-with-version-id
-                 (dissoc :transaction-id)
-                 (dissoc :timestamp)  ;; TODO never include timestamp in the first place
-                 )
+             event-with-version-id
              ))
          events)
     )
@@ -252,17 +258,22 @@ Like replaced-by will return nil."
 
 (defn get-all-events-between-versions "inclusive" [db from-version to-version]
   (convert-events-transaction-ids-to-version-ids
-   (convert-history-to-events
-    (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version)))
+   (sort-by :transaction-id
+            (convert-history-to-events
+             (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version))))
   )
 
-(defn get-all-events-from-version "inclusive" [])
 
 
-(defn transform-event-result [{:keys [type transaction-id preferred-label timestamp concept-id event-type deprecated] }]
+(defn get-all-events-from-version "inclusive" [db from-version]
+  (let [latest-version (ffirst (d/q show-latest-version-id db))]
+    (get-all-events-between-versions db from-version latest-version)
+    )
+  )
+
+(defn transform-event-result [{:keys [type version-id preferred-label concept-id event-type deprecated] }]
   {:eventType event-type
-   :transactionId transaction-id,
-   :timestamp timestamp,
+   :versionId version-id
    :concept (merge (if (true? deprecated) {:deprecated true} {}) ; deprecated optional
                    {:id concept-id,
                     :type type,
@@ -271,6 +282,11 @@ Like replaced-by will return nil."
 (defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."
   (u/pagination  (map transform-event-result  (get-all-events-since db date-time))  offset limit))
+
+(defn get-all-events-from-version-with-pagination [db from-version offset limit]
+  " v1.0"
+  (u/pagination  (map transform-event-result  (get-all-events-from-version db from-version))  offset limit))
+
 
 #_(defn get-all-events-since-v0-9 [db date-time offset limit]
   "Beta for v0.9."

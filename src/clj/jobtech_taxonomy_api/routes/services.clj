@@ -72,14 +72,14 @@
      :auth-rules authenticated?
 
      (GET "/changes" []
-       :query-params [fromDateTime :- String
+       :query-params [fromVersion :- Long
                       {offset       :- Long nil}
                       {limit        :- Long nil}]
        :responses {200 {:schema show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (log/info (str "GET /changes fromDateTime:" fromDateTime " offset:" offset " limit:" limit))
-       (response/ok (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)))
+       :summary      "Show the history from a given version."
+       (log/info (str "GET /changes fromVersion:" fromVersion " offset:" offset " limit:" limit))
+       (response/ok (show-changes-since fromVersion offset limit)))
 
      (GET "/concepts"    []
        :query-params [{id :- String nil}

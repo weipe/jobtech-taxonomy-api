@@ -125,17 +125,16 @@
 (def show-changes-schema
   "The response schema for /changes. Beta for v0.9."
   [{:eventType s/Str
-    :transactionId s/Int
-    :timestamp java.util.Date
+    :versionId s/Int
     :concept { :id s/Str
               :type s/Str
               (s/optional-key :deprecated) s/Bool
               (s/optional-key :preferredLabel) s/Str }}])
 
 
-(defn show-changes-since [date-time offset limit]
+(defn show-changes-since [version-id offset limit]
   "Show changes since a specific time. Beta for v0.9."
-  (get-all-events-since-v0-9 (get-db) date-time offset limit))
+  (get-all-events-from-version-with-pagination (get-db) version-id offset limit))
 
 (defn show-deprecated-concepts-and-replaced-by [date-time]
   (get-deprecated-concepts-replaced-by-since (get-db) date-time))
