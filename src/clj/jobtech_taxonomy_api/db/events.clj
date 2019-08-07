@@ -235,6 +235,8 @@ Like replaced-by will return nil."
    (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version))
   )
 
+(defn get-all-events-from-version "inclusive" [])
+
 
 (defn transform-event-result [{:keys [type transaction-id preferred-label timestamp concept-id event-type deprecated] }]
   {:eventType event-type
