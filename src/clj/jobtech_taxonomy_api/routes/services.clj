@@ -17,6 +17,7 @@
    [jobtech-taxonomy-api.middleware :as middleware]
    [jobtech-taxonomy-api.db.concepts :as concepts]
    [jobtech-taxonomy-api.db.search :as search]
+   [jobtech-taxonomy-api.db.events :as events]
    [jobtech-taxonomy-api.db.information-extraction :as ie]
    [jobtech-taxonomy-api.db.versions :as v]
    [clojure.tools.logging :as log]
@@ -73,13 +74,14 @@
 
      (GET "/changes" []
        :query-params [fromVersion :- Long
+                      {toVersion :- Long nil}
                       {offset       :- Long nil}
                       {limit        :- Long nil}]
-       :responses {200 {:schema show-changes-schema}
+       :responses {200 {:schema events/show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history from a given version."
        (log/info (str "GET /changes fromVersion:" fromVersion " offset:" offset " limit:" limit))
-       (response/ok (show-changes-since fromVersion offset limit)))
+       (response/ok (events/get-all-events-from-version-with-pagination fromVersion toVersion offset limit)))
 
      (GET "/concepts"    []
        :query-params [{id :- String nil}

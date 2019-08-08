@@ -2,6 +2,7 @@
   (:refer-clojure :exclude [type])
   (:require
    [datomic.client.api :as d]
+   [schema.core :as s]
    [jobtech-taxonomy-api.db.api-util :as u]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.config :refer [env]]
@@ -279,23 +280,30 @@ Like replaced-by will return nil."
                     :type type,
                     :preferredLabel preferred-label})})
 
-(defn get-all-events-since-v0-9 [db date-time offset limit]
-  "Beta for v0.9."
+(defn get-all-events-since-v0-9 "Beta for v0.9." [db date-time offset limit]
   (u/pagination  (map transform-event-result  (get-all-events-since db date-time))  offset limit))
 
-(defn get-all-events-from-version-with-pagination [db from-version offset limit]
-  " v1.0"
-  (u/pagination  (map transform-event-result  (get-all-events-from-version db from-version))  offset limit))
+(defn get-all-events-from-version-with-pagination " v1.0" [from-version to-version offset limit]
+  (let [events (if to-version
+                 (get-all-events-between-versions (get-db) from-version to-version)
+                 (get-all-events-from-version (get-db) from-version)
+                 )]
+    (u/pagination  (map transform-event-result  events)  offset limit))
+  )
 
 
-#_(defn get-all-events-since-v0-9 [db date-time offset limit]
-  "Beta for v0.9."
-  '({:eventType "CREATED",
-     :transactionId 13194139534315,
-     :timestamp #inst "2019-05-16T13:55:40.451-00:00",
-     :concept { :id "Vpaw_yX7_BNY",
-               :preferredLabel "Sportdykning",
-               :type :skill }}))
+(def show-changes-schema
+  "The response schema for /changes. Beta for v0.9."
+  [{:eventType s/Str
+    :versionId s/Int
+    :concept { :id s/Str
+              :type s/Str
+              (s/optional-key :deprecated) s/Bool
+              (s/optional-key :preferredLabel) s/Str }}])
+
+
+
+
 
 
 
