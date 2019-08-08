@@ -103,13 +103,16 @@
        :query-params [q       :- String
                       {type   :- String nil}
                       {offset :- Long nil}
-                      {limit  :- Long nil}]
+                      {limit  :- Long nil}
+                      {version :- Long nil}
+                      ]
        :responses {200 {:schema search/get-concepts-by-search-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Autocomplete from query string"
-       (log/info (str "GET /search q:" q " type:" type " offset:" offset " limit:" limit))
-       (response/ok (search/get-concepts-by-search q type offset limit)))
+       (log/info (str "GET /search q:" q " type:" type " offset:" offset " limit:" limit  " version: " version))
+       (response/ok (search/get-concepts-by-search q type offset limit version)))
 
+     ;; "this is the replaced by endpoint"
      (GET "/deprecated-concept-history-since" []
        :query-params [date-time :- String]
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME

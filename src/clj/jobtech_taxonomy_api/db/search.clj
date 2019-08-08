@@ -44,12 +44,12 @@
    }
   )
 
-(defn fetch-concepts [q type offset limit]
+(defn fetch-concepts [q type offset limit version]
 
   (cond-> initial-concept-query
 
     true
-    (-> (update :args conj (get-db))
+    (-> (update :args conj (get-db version))
         (update :args conj (ignore-case q))
 
         )
@@ -79,7 +79,6 @@
     (s/optional-key :preferredLabel) s/Str}])
 
 
-(defn get-concepts-by-search [q type offset limit]
-  "Beta for v0.9."
-  (parse-find-concept-datomic-result (d/q (fetch-concepts q type offset limit)))
+(defn get-concepts-by-search [q type offset limit version]
+  (parse-find-concept-datomic-result (d/q (fetch-concepts q type offset limit version)))
   )
