@@ -80,7 +80,7 @@
        :responses {200 {:schema events/show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history from a given version."
-       (log/info (str "GET /changes fromVersion:" fromVersion " offset:" offset " limit:" limit))
+       (log/info (str "GET /changes fromVersion:" fromVersion " toVersion " toVersion  " offset: " offset " limit: " limit))
        (response/ok (events/get-all-events-from-version-with-pagination fromVersion toVersion offset limit)))
 
      (GET "/concepts"    []
@@ -90,13 +90,14 @@
                       {deprecated :- Boolean false}
                       {offset :- Long nil}
                       {limit :- Long nil}
+                      {version :- Long nil}
                       ]
 
        :responses {200 {:schema concepts/find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
        (log/info (str "GET /concepts " "id:" id " preferredLabel:" preferredLabel " type:" type " deprecated:" deprecated " offset:" offset " limit:" limit))
-       (response/ok (concepts/find-concepts id preferredLabel type deprecated offset limit)))
+       (response/ok (concepts/find-concepts id preferredLabel type deprecated offset limit version)))
 
      (GET "/search" []
        :query-params [q       :- String

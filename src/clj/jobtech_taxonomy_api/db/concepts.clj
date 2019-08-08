@@ -42,12 +42,12 @@
    }
   )
 
-(defn fetch-concepts [id preferred-label type deprecated offset limit]
+(defn fetch-concepts [id preferred-label type deprecated offset limit version]
 
   (cond-> initial-concept-query
 
     true
-    (update :args conj (get-db))
+    (update :args conj (get-db version))
 
     id
     (-> (update :in conj '?id)
@@ -86,8 +86,8 @@
 
 (defn find-concepts
   "Beta for v0.9."
-  ([id preferred-label type deprecated offset limit]
-   (let [result (d/q (fetch-concepts id preferred-label type deprecated offset limit))
+  ([id preferred-label type deprecated offset limit version]
+   (let [result (d/q (fetch-concepts id preferred-label type deprecated offset limit version))
          parsed-result (parse-find-concept-datomic-result result)]
      parsed-result
      ))

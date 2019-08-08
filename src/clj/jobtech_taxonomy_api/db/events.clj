@@ -274,7 +274,7 @@ Like replaced-by will return nil."
 
 (defn transform-event-result [{:keys [type version-id preferred-label concept-id event-type deprecated] }]
   {:eventType event-type
-   :versionId version-id
+   :version version-id
    :concept (merge (if (true? deprecated) {:deprecated true} {}) ; deprecated optional
                    {:id concept-id,
                     :type type,
@@ -295,7 +295,7 @@ Like replaced-by will return nil."
 (def show-changes-schema
   "The response schema for /changes. Beta for v0.9."
   [{:eventType s/Str
-    :versionId s/Int
+    :version s/Int
     :concept { :id s/Str
               :type s/Str
               (s/optional-key :deprecated) s/Bool

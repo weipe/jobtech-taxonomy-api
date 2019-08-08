@@ -17,10 +17,32 @@
 (defn get-conn []
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
 
+
+(def get-database-instance-from-version-query
+  '[:find ?txid
+    :in $ ?version
+    :where
+    [?t :taxonomy-version/id ?version ?txid]
+    ]
+  )
+
+(defn get-transaction-id-from-version [version]
+  (ffirst (d/q get-database-instance-from-version-query (d/db (get-conn))  version))
+  )
+
 ;; This cannot use the conn var, as it will destroy the
 ;; integration tests (where the conn is made before the
 ;; tests fill the databases with test data).
-(defn get-db [] (d/db (get-conn)))
+(defn get-db
+  ([]
+   (d/db (get-conn)))
+  ([version]
+   (if version
+     (d/as-of (d/db (get-conn)) (get-transaction-id-from-version version))
+     (get-db)
+     )
+   )
+  )
 
 (defn get-conn "" []
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
