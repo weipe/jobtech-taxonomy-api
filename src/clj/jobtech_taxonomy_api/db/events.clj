@@ -97,24 +97,6 @@
   )
 
 
-(def show-deprecated-replaced-by-query
-  '[:find (pull ?c
-                    [:concept/id
-                     :concept/definition
-                     :concept/preferred-label
-                     {:concept/replaced-by [:concept/id
-                                            :concept/preferred-label ]}])
-    ?inst
-    :in $ ?since
-    :where
-    [?c :concept/deprecated true]
-    [?c :concept/replaced-by ?rc ?tx]
-    [?tx :db/txInstant ?inst]
-    [(< ?since ?inst)]])
-
-(defn get-deprecated-concepts-replaced-by-since [db date-time]
-  (d/q show-deprecated-replaced-by-query db  date-time))
-
 (defn get-db-hist [db] (d/history db))
 
 (defn group-by-transaction-and-entity [datoms]
@@ -265,7 +247,6 @@ Like replaced-by will return nil."
   )
 
 
-
 (defn get-all-events-from-version "inclusive" [db from-version]
   (let [latest-version (ffirst (d/q show-latest-version-id db))]
     (get-all-events-between-versions db from-version latest-version)
@@ -303,8 +284,64 @@ Like replaced-by will return nil."
 
 
 
+(def show-deprecated-replaced-by-query
+  '[:find (pull ?c
+                    [:concept/id
+                     :concept/definition
+                     :concept/preferred-label
+                     :concept/deprecated
+                     {:concept/replaced-by [:concept/id
+                                            :concept/preferred-label
+                                            ]}])
+    ?inst
+    :in $ ?one-version-before-from-version ?to-version
+    :where
+    [?c :concept/deprecated true]
+    [?c :concept/replaced-by ?rc ?tx]
+    [?tx :db/txInstant ?inst]
+
+    [?fv :taxonomy-version/id ?one-version-before-from-version ?one-version-before-from-version-tx]
+    [?one-version-before-from-version-tx :db/txInstant ?one-version-before-from-version-inst]
+    [(< ?one-version-before-from-version-inst ?inst)]
+
+    [?tv :taxonomy-version/id ?to-version ?to-version-tx]
+    [?to-version-tx :db/txInstant ?to-version-inst]
+    [(> ?to-version-inst ?inst)]
+    ])
+
+(defn transform-replaced-by [{:keys [:concept/id :concept/preferred-label]}]
+  {:id id
+   :preferredLabel preferred-label
+   }
+ )
+
+(defn transform-deprecated-concept-replaced-by-result [[deprecated-concept timestamp]]
+  (let [{:keys [:concept/id :concept/preferred-label :concept/definition :concept/deprecated :concept/replaced-by]}  deprecated-concept
+
+        ]
+    {:timestamp timestamp
+     :concept {:id id
+               :definition definition
+               :preferredLabel preferred-label
+               :deprecated deprecated
+               :replacedBy (map transform-replaced-by replaced-by)
+               }
+     }
+    )
+  )
 
 
+(defn get-deprecated-concepts-replaced-by-from-version [from-version to-version]
+  (let [db (get-db)
+        deprecated-concepts (if to-version
+                              (d/q show-deprecated-replaced-by-query db (dec from-version) to-version)
+                              (d/q show-deprecated-replaced-by-query db (dec from-version) (ffirst (d/q show-latest-version-id db)))
+                              )
+
+        ]
+    (map transform-deprecated-concept-replaced-by-result deprecated-concepts)
+    )
+  )
 
 
 (comment

@@ -114,20 +114,22 @@
 
      ;; "this is the replaced by endpoint"
      (GET "/deprecated-concept-history-since" []
-       :query-params [date-time :- String]
+       :query-params [fromVersion :- Long
+                      {toVersion :- Long nil}
+                      ]
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (log/info (str "GET /deprecated-concept-history-since date-time:" date-time))
-       (response/ok (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))))
+       (log/info (str "GET /deprecated-concept-history-since from-version: " fromVersion " toVersion: " toVersion))
+       (response/ok (events/get-deprecated-concepts-replaced-by-from-version fromVersion toVersion)))
 
      (GET "/concept/types"    []
-       :query-params []
+       :query-params [{version :- Long nil}]
        :responses {200 {:schema [ s/Str ]}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Return a list of all taxonomy types."
-       (log/info "GET /concept/types")
-       (response/ok (get-all-taxonomy-types)))
+       (log/info (str "GET /concept/types version: " version ))
+       (response/ok (get-all-taxonomy-types version)))
 
      (POST "/parse-text"    []
        :query-params [text :- String]
@@ -172,14 +174,14 @@
                       definition :- String
                       preferredLabel :- String]
        :summary      "Assert a new concept."
-       :responses {200 {:schema {:message s/Str :timestamp Date }}
+       :responses {200 {:schema {:message s/Str :timestamp Date :concept concepts/concept-schema }}
                    409 {:schema {:message s/Str}}
                    500 {:schema {:type s/Str, :message s/Str}}}
        (log/info "POST /concept")
-       (let [[result timestamp] (concepts/assert-concept type definition preferredLabel)]
+       (let [[result timestamp new-concept] (concepts/assert-concept type definition preferredLabel)]
          (if result
-           (response/ok {:timestamp timestamp :message "OK"})
-           (response/conflict { :message "Conflict with existing concept." } ))))
+           (response/ok {:timestamp timestamp :message "OK" :concept new-concept})
+           (response/conflict { :message "Can't create new concept since it is in conflict with existing concept." } ))))
 
      (POST "/replace-concept"    []
        :query-params [old-concept-id :- String

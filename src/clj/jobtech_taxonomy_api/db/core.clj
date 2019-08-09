@@ -17,7 +17,7 @@
 
 
 (defn retract-concept [id]
-  (let [found-concept (db-concepts/find-concepts id)]
+  (let [found-concept (db-concepts/find-concepts-including-unpublished id)]
     (if (or (= 0 (count found-concept))
             (get (ffirst found-concept) :concept/deprecated))
       false
@@ -115,8 +115,8 @@
 (def get-all-taxonomy-types-query
   '[:find ?v :where [_ :concept/type ?v]])
 
-(defn get-all-taxonomy-types "Return a list of taxonomy types." []
-  (->> (d/q get-all-taxonomy-types-query (get-db))
+(defn get-all-taxonomy-types "Return a list of taxonomy types." [version]
+  (->> (d/q get-all-taxonomy-types-query (get-db version))
        (sort-by first)
        (flatten)
        (map name)))
