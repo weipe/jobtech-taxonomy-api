@@ -231,7 +231,7 @@ Like replaced-by will return nil."
   (let [versions (d/q show-version-instance-ids (get-db))]
     (map (fn [event]
            (let [version-id (convert-transaction-id-to-version-id  versions  (:transaction-id event))
-                 event-with-version-id (merge event {:version-id version-id})
+                 event-with-version-id (merge event {:version version-id})
                  ]
              event-with-version-id
              ))
@@ -253,9 +253,9 @@ Like replaced-by will return nil."
     )
   )
 
-(defn transform-event-result [{:keys [type version-id preferred-label concept-id event-type deprecated] }]
+(defn transform-event-result [{:keys [type version preferred-label concept-id event-type deprecated] }]
   {:eventType event-type
-   :version version-id
+   :version version
    :concept (merge (if (true? deprecated) {:deprecated true} {}) ; deprecated optional
                    {:id concept-id,
                     :type type,
@@ -293,7 +293,7 @@ Like replaced-by will return nil."
                      {:concept/replaced-by [:concept/id
                                             :concept/preferred-label
                                             ]}])
-    ?inst
+    ?tx
     :in $ ?one-version-before-from-version ?to-version
     :where
     [?c :concept/deprecated true]
@@ -315,11 +315,10 @@ Like replaced-by will return nil."
    }
  )
 
-(defn transform-deprecated-concept-replaced-by-result [[deprecated-concept timestamp]]
+(defn transform-deprecated-concept-replaced-by-result [[deprecated-concept transaction-id]]
   (let [{:keys [:concept/id :concept/preferred-label :concept/definition :concept/deprecated :concept/replaced-by]}  deprecated-concept
-
         ]
-    {:timestamp timestamp
+    {:transaction-id transaction-id
      :concept {:id id
                :definition definition
                :preferredLabel preferred-label
@@ -339,7 +338,7 @@ Like replaced-by will return nil."
                               )
 
         ]
-    (map transform-deprecated-concept-replaced-by-result deprecated-concepts)
+    (sort-by :transaction-id (map #(dissoc % :transaction-id ) (convert-events-transaction-ids-to-version-ids (map transform-deprecated-concept-replaced-by-result deprecated-concepts))))
     )
   )
 

@@ -15,6 +15,7 @@
     :where
     [?t :taxonomy-version/id ?version ?tx]
     [?tx :db/txInstant ?inst]
+    [(not= ?version 66)] ;; 66 is a dummy version to make it easier to code queries
     ]
   )
 
@@ -27,9 +28,8 @@
 ;; get all versions
 (defn get-all-versions []
   "all versions"
-  (reverse
-   (sort-by :version
-            (map convert-response (d/q show-version-instance-ids (get-db)))))
+  (sort-by :version
+           (map convert-response (d/q show-version-instance-ids (get-db))))
   )
 
 

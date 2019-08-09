@@ -72,6 +72,17 @@
      :tags ["public"]
      :auth-rules authenticated?
 
+     (GET "/versions" []
+       :query-params []
+       :responses {200 {:schema [    {:timestamp java.util.Date
+                                      :version s/Int
+                                      }]}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Return a list of all Taxonomy versions."
+       (log/info "GET /versions")
+       (response/ok (v/get-all-versions))
+       )
+
      (GET "/changes" []
        :query-params [fromVersion :- Long
                       {toVersion :- Long nil}
@@ -113,14 +124,14 @@
        (response/ok (search/get-concepts-by-search q type offset limit version)))
 
      ;; "this is the replaced by endpoint"
-     (GET "/deprecated-concept-history-since" []
+     (GET "/replaced-by-changes" []
        :query-params [fromVersion :- Long
                       {toVersion :- Long nil}
                       ]
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
                    500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (log/info (str "GET /deprecated-concept-history-since from-version: " fromVersion " toVersion: " toVersion))
+       :summary      "Show the history of concepts being replaced from a given version."
+       (log/info (str "GET /replaced-by-changes from-version: " fromVersion " toVersion: " toVersion))
        (response/ok (events/get-deprecated-concepts-replaced-by-from-version fromVersion toVersion)))
 
      (GET "/concept/types"    []
@@ -138,16 +149,7 @@
        :summary "Finds all concepts in a text."
        {:body (ie/parse-text text)})
 
-     (GET "/versions" []
-       :query-params []
-       :responses {200 {:schema [    {:timestamp java.util.Date
-                                      :version s/Int
-                                      }]}
-                   500 {:schema {:type s/Str, :message s/Str}}}
-       :summary "Return a list of all Taxonomy versions."
-       (log/info "GET /versions")
-       (response/ok (v/get-all-versions))
-       )
+
 
      )
 

@@ -120,7 +120,3 @@
        (sort-by first)
        (flatten)
        (map name)))
-
-
-(defn show-deprecated-concepts-and-replaced-by [date-time]
-  (get-deprecated-concepts-replaced-by-since (get-db) date-time))
