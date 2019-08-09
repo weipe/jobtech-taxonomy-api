@@ -6,7 +6,9 @@
    [jobtech-taxonomy-api.db.api-util :as u]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.config :refer [env]]
-   [mount.core :refer [defstate]]))
+   [mount.core :refer [defstate]]
+   [clojure.set :refer :all]
+   ))
 
 (def show-concept-history
   '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type
@@ -288,10 +290,14 @@ Like replaced-by will return nil."
   '[:find (pull ?c
                     [:concept/id
                      :concept/definition
+                     :concept/type
                      :concept/preferred-label
                      :concept/deprecated
                      {:concept/replaced-by [:concept/id
+                                            :concept/definition
+                                            :concept/type
                                             :concept/preferred-label
+                                            :concept/deprecated
                                             ]}])
     ?tx
     :in $ ?one-version-before-from-version ?to-version
@@ -309,10 +315,12 @@ Like replaced-by will return nil."
     [(> ?to-version-inst ?inst)]
     ])
 
-(defn transform-replaced-by [{:keys [:concept/id :concept/preferred-label]}]
-  {:id id
-   :preferredLabel preferred-label
-   }
+(defn transform-replaced-by [concept]
+  (rename-keys concept {:concept/id :id
+                        :concept/definition :definition
+                        :concept/type :type
+                        :concept/preferred-label :preferredLabel
+                        :concept/deprecated :deprecated })
  )
 
 (defn transform-deprecated-concept-replaced-by-result [[deprecated-concept transaction-id]]
