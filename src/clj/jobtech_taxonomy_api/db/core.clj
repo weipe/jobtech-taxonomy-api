@@ -17,7 +17,7 @@
 
 
 (defn retract-concept [id]
-  (let [found-concept (db-concepts/find-concepts id)]
+  (let [found-concept (db-concepts/find-concepts-including-unpublished id)]
     (if (or (= 0 (count found-concept))
             (get (ffirst found-concept) :concept/deprecated))
       false
@@ -115,27 +115,8 @@
 (def get-all-taxonomy-types-query
   '[:find ?v :where [_ :concept/type ?v]])
 
-(defn get-all-taxonomy-types "Return a list of taxonomy types." []
-  (->> (d/q get-all-taxonomy-types-query (get-db))
+(defn get-all-taxonomy-types "Return a list of taxonomy types." [version]
+  (->> (d/q get-all-taxonomy-types-query (get-db version))
        (sort-by first)
        (flatten)
        (map name)))
-
-
-(def show-changes-schema
-  "The response schema for /changes. Beta for v0.9."
-  [{:eventType s/Str
-    :transactionId s/Int
-    :timestamp java.util.Date
-    :concept { :id s/Str
-              :type s/Str
-              (s/optional-key :deprecated) s/Bool
-              (s/optional-key :preferredLabel) s/Str }}])
-
-
-(defn show-changes-since [date-time offset limit]
-  "Show changes since a specific time. Beta for v0.9."
-  (get-all-events-since-v0-9 (get-db) date-time offset limit))
-
-(defn show-deprecated-concepts-and-replaced-by [date-time]
-  (get-deprecated-concepts-replaced-by-since (get-db) date-time))

@@ -17,7 +17,9 @@
    [jobtech-taxonomy-api.middleware :as middleware]
    [jobtech-taxonomy-api.db.concepts :as concepts]
    [jobtech-taxonomy-api.db.search :as search]
+   [jobtech-taxonomy-api.db.events :as events]
    [jobtech-taxonomy-api.db.information-extraction :as ie]
+   [jobtech-taxonomy-api.db.versions :as v]
    [clojure.tools.logging :as log]
    [clojure.pprint :as pp]))
 
@@ -70,15 +72,27 @@
      :tags ["public"]
      :auth-rules authenticated?
 
+     (GET "/versions" []
+       :query-params []
+       :responses {200 {:schema [    {:timestamp java.util.Date
+                                      :version s/Int
+                                      }]}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Return a list of all Taxonomy versions."
+       (log/info "GET /versions")
+       (response/ok (v/get-all-versions))
+       )
+
      (GET "/changes" []
-       :query-params [fromDateTime :- String
+       :query-params [fromVersion :- Long
+                      {toVersion :- Long nil}
                       {offset       :- Long nil}
                       {limit        :- Long nil}]
-       :responses {200 {:schema show-changes-schema}
+       :responses {200 {:schema events/show-changes-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (log/info (str "GET /changes fromDateTime:" fromDateTime " offset:" offset " limit:" limit))
-       (response/ok (show-changes-since (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") fromDateTime)) offset limit)))
+       :summary      "Show the history from a given version."
+       (log/info (str "GET /changes fromVersion:" fromVersion " toVersion " toVersion  " offset: " offset " limit: " limit))
+       (response/ok (events/get-all-events-from-version-with-pagination fromVersion toVersion offset limit)))
 
      (GET "/concepts"    []
        :query-params [{id :- String nil}
@@ -87,40 +101,46 @@
                       {deprecated :- Boolean false}
                       {offset :- Long nil}
                       {limit :- Long nil}
+                      {version :- Long nil}
                       ]
 
        :responses {200 {:schema concepts/find-concepts-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Get concepts."
        (log/info (str "GET /concepts " "id:" id " preferredLabel:" preferredLabel " type:" type " deprecated:" deprecated " offset:" offset " limit:" limit))
-       (response/ok (concepts/find-concepts id preferredLabel type deprecated offset limit)))
+       (response/ok (concepts/find-concepts id preferredLabel type deprecated offset limit version)))
 
      (GET "/search" []
        :query-params [q       :- String
                       {type   :- String nil}
                       {offset :- Long nil}
-                      {limit  :- Long nil}]
+                      {limit  :- Long nil}
+                      {version :- Long nil}
+                      ]
        :responses {200 {:schema search/get-concepts-by-search-schema}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary      "Autocomplete from query string"
-       (log/info (str "GET /search q:" q " type:" type " offset:" offset " limit:" limit))
-       (response/ok (search/get-concepts-by-search q type offset limit)))
+       (log/info (str "GET /search q:" q " type:" type " offset:" offset " limit:" limit  " version: " version))
+       (response/ok (search/get-concepts-by-search q type offset limit version)))
 
-     (GET "/deprecated-concept-history-since" []
-       :query-params [date-time :- String]
+     ;; "this is the replaced by endpoint"
+     (GET "/replaced-by-changes" []
+       :query-params [fromVersion :- Long
+                      {toVersion :- Long nil}
+                      ]
        :responses {200 {:schema s/Any} ;; show-concept-events-schema} TODO FIXME
                    500 {:schema {:type s/Str, :message s/Str}}}
-       :summary      "Show the history since the given date. Use the format yyyy-MM-dd HH:mm:ss (i.e. 2017-06-09 14:30:01)."
-       (log/info (str "GET /deprecated-concept-history-since date-time:" date-time))
-       (response/ok (show-deprecated-concepts-and-replaced-by (c/to-date (f/parse (f/formatter "yyyy-MM-dd HH:mm:ss") date-time)))))
+       :summary      "Show the history of concepts being replaced from a given version."
+       (log/info (str "GET /replaced-by-changes from-version: " fromVersion " toVersion: " toVersion))
+       (response/ok (events/get-deprecated-concepts-replaced-by-from-version fromVersion toVersion)))
 
      (GET "/concept/types"    []
-       :query-params []
+       :query-params [{version :- Long nil}]
        :responses {200 {:schema [ s/Str ]}
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Return a list of all taxonomy types."
-       (log/info "GET /concept/types")
-       (response/ok (get-all-taxonomy-types)))
+       (log/info (str "GET /concept/types version: " version ))
+       (response/ok (get-all-taxonomy-types version)))
 
      (POST "/parse-text"    []
        :query-params [text :- String]
@@ -128,6 +148,9 @@
                    500 {:schema {:type s/Str, :message s/Str}}}
        :summary "Finds all concepts in a text."
        {:body (ie/parse-text text)})
+
+
+
      )
 
 
@@ -153,20 +176,36 @@
                       definition :- String
                       preferredLabel :- String]
        :summary      "Assert a new concept."
-       :responses {200 {:schema {:message s/Str :timestamp Date }}
+       :responses {200 {:schema {:message s/Str :timestamp Date :concept concepts/concept-schema }}
                    409 {:schema {:message s/Str}}
                    500 {:schema {:type s/Str, :message s/Str}}}
        (log/info "POST /concept")
-       (let [[result timestamp] (concepts/assert-concept type definition preferredLabel)]
+       (let [[result timestamp new-concept] (concepts/assert-concept type definition preferredLabel)]
          (if result
-           (response/ok {:timestamp timestamp :message "OK"})
-           (response/conflict { :message "Conflict with existing concept." } ))))
+           (response/ok {:timestamp timestamp :message "OK" :concept new-concept})
+           (response/conflict { :message "Can't create new concept since it is in conflict with existing concept." } ))))
 
      (POST "/replace-concept"    []
        :query-params [old-concept-id :- String
                       new-concept-id :- String]
        :summary      "Replace old concept with a new concept."
        {:body (replace-deprecated-concept old-concept-id new-concept-id)})
+
+     (POST "/versions" []
+       :query-params [new-version-id :- Long]
+       :responses {200 {:schema  {:timestamp java.util.Date
+                                  :version s/Int
+                                  :message s/Str
+                                  }}
+                   500 {:schema {:type s/Str, :message s/Str}}}
+       :summary "Creates a new version tag in the database."
+       (log/info (str "POST /versions" new-version-id))
+
+       (let [result (v/create-new-version new-version-id)]
+         (if result
+           (response/ok (merge result {:message "A new version of the Taxonomy was created."}))
+           (response/unprocessable-entity! {:message (str new-version-id " is not the next valid version id!")})
+           )))
 
      (GET "/relation/graph/:relation-type" []
        :path-params [relation-type :- String]

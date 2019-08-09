@@ -2,10 +2,13 @@
   (:refer-clojure :exclude [type])
   (:require
    [datomic.client.api :as d]
+   [schema.core :as s]
    [jobtech-taxonomy-api.db.api-util :as u]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.config :refer [env]]
-   [mount.core :refer [defstate]]))
+   [mount.core :refer [defstate]]
+   [clojure.set :refer :all]
+   ))
 
 (def show-concept-history
   '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type
@@ -34,6 +37,53 @@
   )
 
 
+(def show-concept-history-since-version-query
+  '[:find ?e ?aname ?v ?tx ?added ?inst ?concept-id ?preferred-label ?type ?deprecated
+    :in $ ?one-version-before-from-version ?to-version
+    :where
+    [?e :concept/preferred-label ?preferred-label]
+    [?e :concept/id ?concept-id]
+    [?e :concept/type ?type]
+    [(get-else $ ?e :concept/deprecated false) ?deprecated]
+    [?e ?a ?v ?tx ?added]
+    [?tx :db/txInstant ?inst]
+    [?fv :taxonomy-version/id ?one-version-before-from-version ?one-version-before-from-version-tx]
+    [?one-version-before-from-version-tx :db/txInstant ?one-version-before-from-version-inst]
+    [(< ?one-version-before-from-version-inst ?inst)]
+    [?tv :taxonomy-version/id ?to-version ?to-version-tx]
+    [?to-version-tx :db/txInstant ?to-version-inst]
+    [(> ?to-version-inst ?inst)]
+    [?a :db/ident ?aname]
+    ]
+  )
+
+(def show-version-instance-ids
+  '[:find ?inst ?version
+    :in $
+    :where
+    [?t :taxonomy-version/id ?version ?inst]
+    ]
+  )
+
+(def show-latest-version-id
+  '[:find (max ?version)
+    :in $
+    :where
+    [?t :taxonomy-version/id ?version]
+    ]
+  )
+
+
+#_(def show-version-hist
+  '[:find ?v ?version-inst
+    :in $ ?version
+    :where [?v :taxonomy-version/id ?version ?version-inst]
+    ]
+  )
+
+
+
+
 #_(def show-concept-history-since-transaction-query
   '[:find ?e ?aname ?v ?tx ?added ?concept-id ?term ?pft ?cat
     :in $ ?fromtx
@@ -48,24 +98,6 @@
     ]
   )
 
-
-(def show-deprecated-replaced-by-query
-  '[:find (pull ?c
-                    [:concept/id
-                     :concept/definition
-                     :concept/preferred-label
-                     {:concept/replaced-by [:concept/id
-                                            :concept/preferred-label ]}])
-    ?inst
-    :in $ ?since
-    :where
-    [?c :concept/deprecated true]
-    [?c :concept/replaced-by ?rc ?tx]
-    [?tx :db/txInstant ?inst]
-    [(< ?since ?inst)]])
-
-(defn get-deprecated-concepts-replaced-by-since [db date-time]
-  (d/q show-deprecated-replaced-by-query db  date-time))
 
 (defn get-db-hist [db] (d/history db))
 
@@ -143,6 +175,48 @@ Like replaced-by will return nil."
         events (filter some? (map determine-event-type datoms-by-attribute))]
     events))
 
+
+;; (d/q show-version-instance-ids (get-db))
+(comment
+  (d/q show-version-instance-ids (get-db))
+  [[13194139533328 68] [13194139533330 69] [13194139533326 67]]
+  stoppa in ditt värde i listan ovan
+  sortera listan på transactions id:n
+  ta index för ditt värde ut listan
+  stega upp ett index för att få nästföljande transaktionsid med tillhörande taxonomy-versionsid
+
+  ...
+  Blås databasen.
+
+  Skapa 3 test transactioner
+  1 spara version 66 i tom databas !!
+  2 Spara conceptet gammel-java
+  3 spara version 67
+  4 updatera gammel java, sätt den till deprecated
+  5. spara version 68
+  6.
+
+  1. databas tom
+  2. skapa första versions tagg i tomma databasen.
+  3. redaktionen lägger in saker i databasen.
+  4. Redaktionen skapar en version av all som tidigare funnits i databasen, dvs allt innan versions-transaktionen fram till versionen innan.
+  5. redaktionen lägger in mer data.
+  6. skapar ny version.
+
+  Hämta transaktioner från (från-version - 1) till transaktioner tidigare än  (till-version)
+
+  )
+
+(defn convert-transaction-id-to-version-id [versions-with-transatcion-ids transaction-id]
+  (let [;; versions (d/q show-version-instance-ids (get-db))
+        sorted-versions (sort-by first (conj versions-with-transatcion-ids [transaction-id]))
+        index-of-next-element-to-transaction-id (.indexOf  sorted-versions [transaction-id])
+        version-id (second (nth sorted-versions (inc index-of-next-element-to-transaction-id)))
+        ]
+    version-id
+    )
+  )
+
 (defn get-all-events [db]
   (sort-by :transaction-id
            (convert-history-to-events
@@ -153,24 +227,155 @@ Like replaced-by will return nil."
            (convert-history-to-events
             (d/q show-concept-history-since-query (get-db-hist db) date-time))))
 
-(defn transform-event-result [{:keys [type transaction-id preferred-label timestamp concept-id event-type deprecated] }]
+
+
+(defn convert-events-transaction-ids-to-version-ids [events]
+  (let [versions (d/q show-version-instance-ids (get-db))]
+    (map (fn [event]
+           (let [version-id (convert-transaction-id-to-version-id  versions  (:transaction-id event))
+                 event-with-version-id (merge event {:version version-id})
+                 ]
+             event-with-version-id
+             ))
+         events)
+    )
+  )
+
+(defn get-all-events-between-versions "inclusive" [db from-version to-version]
+  (convert-events-transaction-ids-to-version-ids
+   (sort-by :transaction-id
+            (convert-history-to-events
+             (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version))))
+  )
+
+
+(defn get-all-events-from-version "inclusive" [db from-version]
+  (let [latest-version (ffirst (d/q show-latest-version-id db))]
+    (get-all-events-between-versions db from-version latest-version)
+    )
+  )
+
+(defn transform-event-result [{:keys [type version preferred-label concept-id event-type deprecated] }]
   {:eventType event-type
-   :transactionId transaction-id,
-   :timestamp timestamp,
+   :version version
    :concept (merge (if (true? deprecated) {:deprecated true} {}) ; deprecated optional
                    {:id concept-id,
                     :type type,
                     :preferredLabel preferred-label})})
 
-(defn get-all-events-since-v0-9 [db date-time offset limit]
-  "Beta for v0.9."
+(defn get-all-events-since-v0-9 "Beta for v0.9." [db date-time offset limit]
   (u/pagination  (map transform-event-result  (get-all-events-since db date-time))  offset limit))
 
-#_(defn get-all-events-since-v0-9 [db date-time offset limit]
-  "Beta for v0.9."
-  '({:eventType "CREATED",
-     :transactionId 13194139534315,
-     :timestamp #inst "2019-05-16T13:55:40.451-00:00",
-     :concept { :id "Vpaw_yX7_BNY",
-               :preferredLabel "Sportdykning",
-               :type :skill }}))
+(defn get-all-events-from-version-with-pagination " v1.0" [from-version to-version offset limit]
+  (let [events (if to-version
+                 (get-all-events-between-versions (get-db) from-version to-version)
+                 (get-all-events-from-version (get-db) from-version)
+                 )]
+    (u/pagination  (map transform-event-result  events)  offset limit))
+  )
+
+
+(def show-changes-schema
+  "The response schema for /changes. Beta for v0.9."
+  [{:eventType s/Str
+    :version s/Int
+    :concept { :id s/Str
+              :type s/Str
+              (s/optional-key :deprecated) s/Bool
+              (s/optional-key :preferredLabel) s/Str }}])
+
+
+
+(def show-deprecated-replaced-by-query
+  '[:find (pull ?c
+                    [:concept/id
+                     :concept/definition
+                     :concept/type
+                     :concept/preferred-label
+                     :concept/deprecated
+                     {:concept/replaced-by [:concept/id
+                                            :concept/definition
+                                            :concept/type
+                                            :concept/preferred-label
+                                            :concept/deprecated
+                                            ]}])
+    ?tx
+    :in $ ?one-version-before-from-version ?to-version
+    :where
+    [?c :concept/deprecated true]
+    [?c :concept/replaced-by ?rc ?tx]
+    [?tx :db/txInstant ?inst]
+
+    [?fv :taxonomy-version/id ?one-version-before-from-version ?one-version-before-from-version-tx]
+    [?one-version-before-from-version-tx :db/txInstant ?one-version-before-from-version-inst]
+    [(< ?one-version-before-from-version-inst ?inst)]
+
+    [?tv :taxonomy-version/id ?to-version ?to-version-tx]
+    [?to-version-tx :db/txInstant ?to-version-inst]
+    [(> ?to-version-inst ?inst)]
+    ])
+
+(defn transform-replaced-by [concept]
+  (rename-keys concept {:concept/id :id
+                        :concept/definition :definition
+                        :concept/type :type
+                        :concept/preferred-label :preferredLabel
+                        :concept/deprecated :deprecated })
+ )
+
+(defn transform-deprecated-concept-replaced-by-result [[deprecated-concept transaction-id]]
+  (let [{:keys [:concept/id :concept/preferred-label :concept/definition :concept/deprecated :concept/replaced-by]}  deprecated-concept
+        ]
+    {:transaction-id transaction-id
+     :concept {:id id
+               :definition definition
+               :preferredLabel preferred-label
+               :deprecated deprecated
+               :replacedBy (map transform-replaced-by replaced-by)
+               }
+     }
+    )
+  )
+
+
+(defn get-deprecated-concepts-replaced-by-from-version [from-version to-version]
+  (let [db (get-db)
+        deprecated-concepts (if to-version
+                              (d/q show-deprecated-replaced-by-query db (dec from-version) to-version)
+                              (d/q show-deprecated-replaced-by-query db (dec from-version) (ffirst (d/q show-latest-version-id db)))
+                              )
+
+        ]
+    (sort-by :transaction-id (map #(dissoc % :transaction-id ) (convert-events-transaction-ids-to-version-ids (map transform-deprecated-concept-replaced-by-result deprecated-concepts))))
+    )
+  )
+
+
+(comment
+
+
+  ;; (d/transact (get-conn) {:tx-data [{:taxonomy-version/id 67}]})
+
+  ;; (d/q '[:find (pull ?v [*])  :in $ :where [?v :taxonomy-version/id]] (get-db) )
+
+  (def get-version
+    '[:find ?e
+      :in $
+      :where [?e :taxonomy-version/id 67]
+      ]
+    )
+
+  (defn get-verion-67-entity []
+    (ffirst (d/q get-version (get-db))))
+
+  (defn convert []
+    (let [version-db-id (get-verion-67-entity)]
+      [{:db/id version-db-id
+        :taxonomy-version/id 68}]
+      )
+
+    )
+
+  ;; (d/transact (get-conn) {:tx-data [{:taxonomy-version/id 67}]})
+
+  )
