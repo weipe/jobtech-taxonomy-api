@@ -315,7 +315,7 @@ Like replaced-by will return nil."
     [(> ?to-version-inst ?inst)]
     ])
 
-(defn transform-replaced-by [concept]
+#_(defn transform-replaced-by [concept]
   (rename-keys concept {:concept/id :id
                         :concept/definition :definition
                         :concept/type :type
@@ -331,7 +331,7 @@ Like replaced-by will return nil."
                :definition definition
                :preferredLabel preferred-label
                :deprecated deprecated
-               :replacedBy (map transform-replaced-by replaced-by)
+               :replacedBy (map u/transform-replaced-by replaced-by)
                }
      }
     )

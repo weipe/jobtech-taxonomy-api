@@ -21,6 +21,12 @@
                      :concept/definition
                      :concept/preferred-label
                      :concept/deprecated
+                     {:concept/replaced-by [:concept/id
+                                            :concept/definition
+                                            :concept/type
+                                            :concept/preferred-label
+                                            :concept/deprecated
+                                            ]}
                      ])]
     :in [$]
     :args []
@@ -109,6 +115,14 @@
    )
   )
 
+(def replaced-by-concept-schema
+  {:id s/Str
+   :type s/Str
+   :definition s/Str
+   :preferredLabel s/Str
+   (s/optional-key :deprecated) s/Bool
+   }
+  )
 
 (def concept-schema
   {:id s/Str
@@ -116,6 +130,7 @@
    :definition s/Str
    :preferredLabel s/Str
    (s/optional-key :deprecated) s/Bool
+   (s/optional-key :replacedBy)  [replaced-by-concept-schema]
    }
   )
 

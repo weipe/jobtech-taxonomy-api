@@ -19,6 +19,15 @@
     ]
   )
 
+
+(def show-latest-version
+  '[:find (max ?version)
+    :in $
+    :where
+    [?t :taxonomy-version/id ?version]
+    ]
+  )
+
 (defn- convert-response [[timestamp version]]
   {:timestamp timestamp
    :version version
@@ -34,7 +43,7 @@
 
 
 (defn is-the-new-version-id-correct? [new-version-id]
-  (= new-version-id (inc (:version (first (get-all-versions)))))
+  (= new-version-id (inc (ffirst (d/q show-latest-version (get-db)))))
   )
 
 
@@ -42,7 +51,7 @@
   (if (is-the-new-version-id-correct? new-version-id)
     (do
       (d/transact (get-conn) {:tx-data [ {:taxonomy-version/id new-version-id}  ]})
-      (first (get-all-versions))
+      (last (get-all-versions))
       )
     nil
     )

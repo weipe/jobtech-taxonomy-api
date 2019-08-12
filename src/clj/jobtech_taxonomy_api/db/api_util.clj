@@ -4,8 +4,24 @@
    )
   )
 
+(defn transform-replaced-by [concept]
+  (set/rename-keys concept {:concept/id :id
+                        :concept/definition :definition
+                        :concept/type :type
+                        :concept/preferred-label :preferredLabel
+                        :concept/deprecated :deprecated })
+ )
+
+
 (defn rename-concept-keys-for-api [concept]
-  (set/rename-keys concept {:concept/preferred-label :preferredLabel, :concept/id :id, :concept/definition :definition, :concept/type :type :concept/deprecated :deprecated}))
+  (let [renamed-concept (set/rename-keys concept {:concept/preferred-label :preferredLabel, :concept/id :id, :concept/definition :definition, :concept/type :type :concept/deprecated :deprecated :concept/replaced-by :replacedBy})]
+
+    (if (:replacedBy renamed-concept)
+      (update renamed-concept :replacedBy #(map transform-replaced-by %))
+      renamed-concept
+      )
+    )
+  )
 
 
 (defn parse-find-concept-datomic-result [result]
