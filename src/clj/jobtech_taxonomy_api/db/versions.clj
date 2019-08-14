@@ -15,7 +15,7 @@
     :where
     [?t :taxonomy-version/id ?version ?tx]
     [?tx :db/txInstant ?inst]
-    [(not= ?version 66)] ;; 66 is a dummy version to make it easier to code queries
+    [(not= ?version 0)] ;; 0 is a dummy version to make it easier to code queries
     ]
   )
 
