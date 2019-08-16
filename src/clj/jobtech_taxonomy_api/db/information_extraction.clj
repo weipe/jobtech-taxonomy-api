@@ -2,10 +2,15 @@
   (:refer-clojure :exclude [type])
   (:require
    [schema.core :as s]
+   [clojure.java.io :as io]
    [datomic.client.api :as d]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.db.api-util :refer :all]
    [clojure.set :as set]
+   [clojure.string :as str]
+   [jobtech-nlp-tokeniser.tokeniser :as tokeniser]
+   [jobtech-nlp-stop-words.stop-words :as stop-words]
+   [nlp.compound-splitter.stava :as stava]
    )
   )
 
@@ -18,9 +23,24 @@
     [?c :concept/type ?type]
     ])
 
+(defn dumb-split [word]
+  (first (stava/split word)))
+
+(defn- tokenise [concepts]
+  (mapcat (fn [[term id typ]]
+            (let [space-split (tokeniser/tokenise-no-punctuation term)
+                  comp-split (flatten (map #(flatten (dumb-split %)) space-split))
+                  joined (remove stop-words/stop-word? (remove str/blank? (distinct (concat space-split comp-split))))] ;;FIXME: this mess was made in a hurry - improve
+              (map #(list % id typ) (flatten joined))))
+          concepts))
+
 (defn- get-all-concepts []
-  (d/q get-all-concepts-query (get-db))
-  )
+  (let [all-concepts
+        (d/q get-all-concepts-query (get-db))]
+        ;;[["Java" "yLeW_gBx_UHv" "skill"] ["clojure" "r7yE_Xe9_dcT" "skill"]]
+        ;; [["Programmering, Java, xyz" "yLeW_gBx_UHv" "skill"] ["Programmering, LatticeC" "yLeW_gBx_XXX" "skill"] ["clojure" "r7yE_Xe9_dcT" "skill"]]
+        ;;[["javaprogrammering, clojure" "yLeW_gBx_UHv" "skill"] ["Programmering, LatticeC" "yLeW_gBx_XXX" "skill"] ["Cobol" "yLeW_gBx_XXX" "skill"]]]
+    (tokenise all-concepts)))
 
 (def all-concepts (memoize get-all-concepts))
 
@@ -57,10 +77,22 @@
   (get (taxonomy-dictionary) (clojure.string/lower-case word))
   )
 
+(defn tokenise-and-compound-split [text]
+  (flatten (map (fn [word]
+                  (remove stop-words/stop-word? (remove #(empty? %) (dumb-split word))))
+                (tokeniser/tokenise-no-punctuation text))))
+
 (defn parse-text [text]
-  (let [matches (map first (re-seq (taxonomy-regex) text))
-        concepts (seq (set (mapcat lookup-in-taxonomy-dictionary matches)))
+  (let [full-matches (map first (re-seq (taxonomy-regex) text))
+        compound-text (str/join " " (tokenise-and-compound-split text))
+        compound-matches (map first (re-seq (taxonomy-regex) compound-text))
+        all-matches (distinct (concat full-matches compound-matches))
+        concepts (seq (set (mapcat lookup-in-taxonomy-dictionary all-matches)))
         ]
-    concepts
-    )
-  )
+    (distinct concepts)
+    ))
+
+;; (parse-text "javaprogrammering")
+;; (str/join " " (tokenise-and-compound-split "Javaprogrammerare"))
+;; (str/join " " (dumb-split "båtmotor"))
+;; (parse-text "jag kan javaprogrammering och LatticeC, och är en Cobolprogrammerare")
