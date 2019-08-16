@@ -5,8 +5,8 @@
 
   :dependencies [[jobtech-taxonomy-database "0.1.0-SNAPSHOT"]
                  [jobtech-nlp-stava "0.0.2"]
-                 [jobtech-nlp-tokeniser "0.1.0-SNAPSHOT"]
-                 [jobtech-nlp-stop-words "0.1.0-SNAPSHOT"]
+                 [jobtech-nlp-tokeniser "0.1.0"]
+                 [jobtech-nlp-stop-words "0.1.0"]
                  [buddy "2.0.0"]
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
