@@ -72,6 +72,7 @@
    :test          [:project/test :profiles/test]
 
    :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
+                    :jvm-opts [~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.0.2/linux-amd64")]
                     ;; You can only comment in one resource-path:
                     ;:resource-paths ["env/dev/resources"] ; comment in for local use
                     :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins

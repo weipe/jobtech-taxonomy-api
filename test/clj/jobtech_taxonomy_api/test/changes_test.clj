@@ -17,7 +17,7 @@
                          :headers [util/header-auth-user]
                          :query-params [{:key "fromDateTime", :val "2019-05-21%2009%3A46%3A08"}])
           an-event (first body)
-          found-concept (first (db-concepts/find-concepts nil "cykla" "skill" false 0 1))]
+          found-concept (first (db-concepts/find-concepts nil "cykla" "skill" false 0 1 nil))]
 
       (test/is (= "CREATED" (:eventType an-event)))
 
