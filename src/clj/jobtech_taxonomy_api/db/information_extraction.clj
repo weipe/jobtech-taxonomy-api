@@ -30,16 +30,17 @@
   (mapcat (fn [[term id typ]]
             (let [space-split (tokeniser/tokenise-no-punctuation term)
                   comp-split (flatten (map #(flatten (dumb-split %)) space-split))
-                  joined (remove stop-words/stop-word? (remove str/blank? (distinct (concat space-split comp-split))))] ;;FIXME: this mess was made in a hurry - improve
-              (map #(list % id typ) (flatten joined))))
+                  joined (remove stop-words/stop-word?
+                                 (remove str/blank?
+                                         (distinct
+                                          (map str/lower-case ;; lower-case here may be questionable decision
+                                               (concat space-split comp-split)))))] ;;FIXME: this mess was made in a hurry - improve
+              (map #(list % term id typ) (flatten joined))))
           concepts))
 
 (defn- get-all-concepts []
   (let [all-concepts
         (d/q get-all-concepts-query (get-db))]
-        ;;[["Java" "yLeW_gBx_UHv" "skill"] ["clojure" "r7yE_Xe9_dcT" "skill"]]
-        ;; [["Programmering, Java, xyz" "yLeW_gBx_UHv" "skill"] ["Programmering, LatticeC" "yLeW_gBx_XXX" "skill"] ["clojure" "r7yE_Xe9_dcT" "skill"]]
-        ;;[["javaprogrammering, clojure" "yLeW_gBx_UHv" "skill"] ["Programmering, LatticeC" "yLeW_gBx_XXX" "skill"] ["Cobol" "yLeW_gBx_XXX" "skill"]]]
     (tokenise all-concepts)))
 
 (def all-concepts (memoize get-all-concepts))
@@ -55,7 +56,7 @@
 (def taxonomy-regex (memoize build-regex))
 
 
-(defn- to-concept [[label id type]]
+(defn- to-concept [[_ label id type]]
   {:id id
    :type type
    :preferredLabel label
@@ -82,17 +83,22 @@
                   (remove stop-words/stop-word? (remove #(empty? %) (dumb-split word))))
                 (tokeniser/tokenise-no-punctuation text))))
 
-(defn parse-text [text]
+(defn parse-text-experiment-with-text-compound-splitting [text]
   (let [full-matches (map first (re-seq (taxonomy-regex) text))
         compound-text (str/join " " (tokenise-and-compound-split text))
         compound-matches (map first (re-seq (taxonomy-regex) compound-text))
         all-matches (distinct (concat full-matches compound-matches))
         concepts (seq (set (mapcat lookup-in-taxonomy-dictionary all-matches)))
         ]
-    (distinct concepts)
-    ))
+    (distinct concepts)))
 
-;; (parse-text "javaprogrammering")
+(defn parse-text [text]
+  (let [full-matches (map first (re-seq (taxonomy-regex) text))
+        concepts (seq (set (mapcat lookup-in-taxonomy-dictionary full-matches)))]
+    (distinct concepts)))
+
+;; (parse-text "restaurang, språk")
+;; (dumb-split "Cobolprogrammering")
 ;; (str/join " " (tokenise-and-compound-split "Javaprogrammerare"))
 ;; (str/join " " (dumb-split "båtmotor"))
-;; (parse-text "jag kan javaprogrammering och LatticeC, och är en Cobolprogrammerare")
+;; (parse-text "jag kan javaprogrammering och C, och är en Cobolprogrammerare")

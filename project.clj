@@ -77,7 +77,8 @@
                     ;:resource-paths ["env/dev/resources"] ; comment in for local use
                     :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
                     }
-   :project/dev  {:jvm-opts ["-Dconf=dev-config.edn"] ; FIXME: the filed referred here does not exist
+   :project/dev  {:jvm-opts ["-Dconf=dev-config.edn" ; FIXME: the filed referred here does not exist
+                             ~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.0.2/linux-amd64")]
                   :dependencies [[expound "0.7.2"]
                                  [pjstadig/humane-test-output "0.9.0"]
                                  [prone "1.6.1"]
