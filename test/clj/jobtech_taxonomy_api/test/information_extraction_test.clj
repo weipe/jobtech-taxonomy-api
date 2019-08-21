@@ -9,7 +9,7 @@
 
 (test/use-fixtures :each util/fixture)
 
-(defn comp
+(defn comp-cpt
   [el1 el2]
   (compare (:preferredLabel el1) (:preferredLabel el2)))
 
@@ -18,8 +18,8 @@
     (let [[db-before inst ent] (concept/assert-concept
                                 "skill" "javaprogrammering" "javaprogrammering")
           new-id (get ent :id)
-          analysis (sort comp (inf-ext/parse-text "javaprogrammering"))
-          correct (sort comp [{:id new-id, :type "skill", :preferredLabel "programmering"}
+          analysis (sort comp-cpt (inf-ext/parse-text "javaprogrammering"))
+          correct (sort comp-cpt [{:id new-id, :type "skill", :preferredLabel "programmering"}
                          {:id new-id, :type "skill", :preferredLabel "java"}
                          {:id new-id, :type "skill", :preferredLabel "javaprogrammering"}])]
       (test/is (= analysis correct)))))
