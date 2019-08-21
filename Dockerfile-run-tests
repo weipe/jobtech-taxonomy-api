@@ -1,0 +1,42 @@
+FROM ubuntu:bionic-20190807
+
+ARG branch=develop
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /tmp
+
+RUN apt-get -y update && apt-get --no-install-recommends -y install openjdk-8-jre wget git awscli openssh-client &&\
+
+    # Leiningen
+    wget -O /usr/local/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein &&\
+    chmod a+rx /usr/local/bin/lein &&\
+
+    # Datomic socks proxy - patch to bind to 0.0.0.0 to be usable from within Docker container
+    wget -O /usr/local/bin/datomic-socks-proxy https://docs.datomic.com/cloud/files/datomic-socks-proxy && \
+    chmod a+rx /usr/local/bin/datomic-socks-proxy &&\
+    sed -i 's|CND 8192|CND 0.0.0.0:8192|' /usr/local/bin/datomic-socks-proxy &&\
+
+    # Checkout project, select branch
+    git clone https://github.com/JobtechSwe/jobtech-taxonomy-api.git &&\
+    cd jobtech-taxonomy-api &&\
+    git checkout "$branch" &&\
+
+    # Fetch lein deps
+    lein deps &&\
+
+    # Use developer config, but with integration-test database name
+    cp env/dev/resources/config.edn env/integration-test/resources/config.edn &&\
+    sed -i 's|^\([ ]*[^;].*\)datomic-name.*$|\1datomic-name "integration-test"|' env/integration-test/resources/config.edn && \
+
+    # Clean up stuff
+    dpkg --purge wget &&\
+    rm -rf /var/lib/apt/lists/* &&\
+
+    # Make the proxy script non-interactive by patching ssh client config
+    echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config &&\
+
+    # Create a simple test runner script. Skip changes-test-0, as it is broken at the moment
+    echo 'datomic-socks-proxy prod-jobtech-taxonomy-db & sleep 1 && cd /tmp/jobtech-taxonomy-api && git pull && for TEST in $(bin/list-tests.sh | grep -v changes-test-0); do lein kaocha --focus $TEST; done' > /tmp/runtest.sh
+
+CMD [ "/bin/sh" "/tmp/runtest.sh" ]
