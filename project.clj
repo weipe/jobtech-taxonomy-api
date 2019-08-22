@@ -4,7 +4,7 @@
   :url "http://example.com/FIXME"
 
   :dependencies [[jobtech-taxonomy-database "0.1.0-SNAPSHOT"]
-                 [jobtech-nlp-stava "0.0.2"]
+                 [jobtech-nlp-stava "0.0.3"]
                  [jobtech-nlp-tokeniser "0.1.0"]
                  [jobtech-nlp-stop-words "0.1.0"]
                  [buddy "2.0.0"]
@@ -72,13 +72,13 @@
    :test          [:project/test :profiles/test]
 
    :project/kaocha {:dependencies [[lambdaisland/kaocha "0.0-418"]]
-                    :jvm-opts [~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.0.2/linux-amd64")]
+                    :jvm-opts [~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.0.3/linux-amd64")]
                     ;; You can only comment in one resource-path:
-                    ;:resource-paths ["env/dev/resources"] ; comment in for local use
-                    :resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
+                    :resource-paths ["env/dev/resources"] ; comment in for local use
+                    ;:resource-paths ["env/integration-test/resources"] ; comment in for Jenkins
                     }
    :project/dev  {:jvm-opts ["-Dconf=dev-config.edn" ; FIXME: the filed referred here does not exist
-                             ~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.0.2/linux-amd64")]
+                             ~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.0.3/linux-amd64")]
                   :dependencies [[expound "0.7.2"]
                                  [pjstadig/humane-test-output "0.9.0"]
                                  [prone "1.6.1"]
