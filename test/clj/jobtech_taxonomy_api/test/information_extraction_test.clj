@@ -18,8 +18,18 @@
     (let [[db-before inst ent] (concept/assert-concept
                                 "skill" "javaprogrammering" "javaprogrammering")
           new-id (get ent :id)
-          analysis (sort comp-cpt (inf-ext/parse-text "javaprogrammering"))
-          correct (sort comp-cpt [{:id new-id, :type "skill", :preferredLabel "programmering"}
-                         {:id new-id, :type "skill", :preferredLabel "java"}
-                         {:id new-id, :type "skill", :preferredLabel "javaprogrammering"}])]
+          analysis (sort comp-cpt (inf-ext/parse-text "java"))
+          correct (sort comp-cpt [{:id new-id, :type "skill", :preferredLabel "javaprogrammering"}])]
       (test/is (= analysis correct)))))
+
+;; (test/deftest ^:xyz information-extraction-test1
+;;   (test/testing ""
+;;     (let [[db-before inst ent] (concept/assert-concept
+;;                                 "skill" "javaprogrammering" "javaprogrammering")
+;;           new-id (get ent :id)
+;;           analysis (sort comp-cpt (inf-ext/parse-text-experiment-with-text-compound-splitting "javaprogrammering"))
+;;           correct (sort comp-cpt [{:id new-id, :type "skill", :preferredLabel "programmering"}
+;;                          {:id new-id, :type "skill", :preferredLabel "java"}
+;;                                   {:id new-id, :type "skill", :preferredLabel "javaprogrammering"}])]
+;;       (pp/pprint analysis)
+;;       (test/is (= analysis correct)))))
