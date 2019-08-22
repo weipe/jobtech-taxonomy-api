@@ -22,14 +22,15 @@
           correct (sort comp-cpt [{:id new-id, :type "skill", :preferredLabel "javaprogrammering"}])]
       (test/is (= analysis correct)))))
 
-;; (test/deftest ^:xyz information-extraction-test1
-;;   (test/testing ""
-;;     (let [[db-before inst ent] (concept/assert-concept
-;;                                 "skill" "javaprogrammering" "javaprogrammering")
-;;           new-id (get ent :id)
-;;           analysis (sort comp-cpt (inf-ext/parse-text-experiment-with-text-compound-splitting "javaprogrammering"))
-;;           correct (sort comp-cpt [{:id new-id, :type "skill", :preferredLabel "programmering"}
-;;                          {:id new-id, :type "skill", :preferredLabel "java"}
-;;                                   {:id new-id, :type "skill", :preferredLabel "javaprogrammering"}])]
-;;       (pp/pprint analysis)
-;;       (test/is (= analysis correct)))))
+(test/deftest ^:xyz2 information-extraction-test1
+  (test/testing "Lagra två koncept 'javaprogrammering' och 'kodprogrammering', och kolla att söktermen 'programmering' returnerar båda två."
+    (let [[_ _ ent-javaprogrammering] (concept/assert-concept
+                                       "skill" "javaprogrammering" "javaprogrammering")
+          [_ _ ent-kodprogrammering] (concept/assert-concept
+                                       "skill" "kodprogrammering" "kodprogrammering")
+          new-id-javaprogrammering (get ent-javaprogrammering :id)
+          new-id-kodprogrammering (get ent-kodprogrammering :id)
+          analysis (sort comp-cpt (inf-ext/parse-text-experiment-with-text-compound-splitting "programmering"))
+          correct (sort comp-cpt [{:id new-id-javaprogrammering, :preferredLabel "javaprogrammering", :type "skill"}
+                                  {:id new-id-kodprogrammering, :preferredLabel "kodprogrammering", :type "skill"}])]
+      (test/is (= analysis correct)))))
