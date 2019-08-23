@@ -10,7 +10,7 @@
    [clojure.string :as str]
    [jobtech-nlp-tokeniser.tokeniser :as tokeniser]
    [jobtech-nlp-stop-words.stop-words :as stop-words]
-   [nlp.compound-splitter.stava :as stava]
+   [jobtech-nlp-stava.compound-splitter.stava :as stava]
    )
   )
 
@@ -97,8 +97,9 @@
         concepts (seq (set (mapcat lookup-in-taxonomy-dictionary full-matches)))]
     (distinct concepts)))
 
-;; (parse-text "restaurang, språk")
-;; (dumb-split "Cobolprogrammering")
+;; (seq (set (mapcat lookup-in-taxonomy-dictionary ["java"])))
+;; (parse-text-experiment-with-text-compound-splitting "javaprogrammering")
+;; (dumb-split "kodprogrammering")
 ;; (str/join " " (tokenise-and-compound-split "Javaprogrammerare"))
 ;; (str/join " " (dumb-split "båtmotor"))
 ;; (parse-text "jag kan javaprogrammering och C, och är en Cobolprogrammerare")
