@@ -15,5 +15,5 @@
                           :get "/v0/taxonomy/public/concepts"
                           :headers [util/header-auth-user]
                           :query-params [{:key "type", :val "skill"}])
-          found-concept (first (concept/find-concepts nil "cykla" nil nil nil nil))]
+          found-concept (first (concept/find-concepts nil "cykla" nil nil nil nil nil))]
       (test/is (= "cykla" (get found-concept :preferredLabel))))))
