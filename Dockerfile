@@ -29,4 +29,4 @@ COPY --from=builder target/uberjar/jobtech-taxonomy-api.jar /jobtech-taxonomy-ap
 
 EXPOSE 3000
 
-CMD ["java", "-jar", "/jobtech-taxonomy-api/app.jar"]
+CMD ["java", "-Djava.library.path=/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64", "-jar", "/jobtech-taxonomy-api/app.jar"]
