@@ -35,4 +35,6 @@ COPY --from=builder /stava/ /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-a
 
 EXPOSE 3000
 
+RUN chmod -R a+rx /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64
+
 CMD ["java", "-Djava.library.path=/root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64", "-jar", "/jobtech-taxonomy-api/app.jar"]
