@@ -1,36 +1,38 @@
-FROM clojure:openjdk-8-lein as builder
+FROM openjdk:8-alpine as builder
 
 COPY . /
 
-#COPY project.clj /
-#cOPY dev-config.edn /
-#COPY env /
-#COPY Capstanfile /
-#COPY env /
-# COPY log /
-# COPY Procfile /
-# COPY README.md /
-# COPY src /
-# COPY resources /
-# COPY test /
-# COPY test-config.edn /
-
-
-
-RUN pwd
-
 WORKDIR /
 
-RUN lein uberjar
+RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev &&\
+        # Get latest leiningen
+        wget -O /usr/local/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein &&\
+        chmod a+rx /usr/local/bin/lein &&\
+        #
+        # Fetch lein deps
+        lein deps &&\
+        #
+        # Build native library
+        # TODO: add tag to checkout, to make sure a proper, correct release is used
+        git clone --depth=1 https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
+        cd jobtech-nlp-stava &&\
+        lein deps &&\
+        lein build-lib &&\
+        mv resources /stava &&\
+        cd .. &&\
+        rm -rf jobtech-nlp-stava &&\
+        #
+        lein deps &&\
+        lein uberjar
+
+
 
 FROM openjdk:8-alpine
 
 COPY --from=builder target/uberjar/jobtech-taxonomy-api.jar /jobtech-taxonomy-api/app.jar
 
+COPY --from=builder /stava/ /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64/
+
 EXPOSE 3000
 
-RUN mkdir -p /.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
-        cd /.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
-        unzip /jobtech-taxonomy-api/app.jar libstava.so
-
-CMD ["java", "-Djava.library.path=/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64", "-jar", "/jobtech-taxonomy-api/app.jar"]
+CMD ["java", "-Djava.library.path=/root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64", "-jar", "/jobtech-taxonomy-api/app.jar"]
