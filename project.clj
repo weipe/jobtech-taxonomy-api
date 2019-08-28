@@ -66,7 +66,7 @@
              :uberjar-name "jobtech-taxonomy-api.jar"
              :source-paths ["env/prod/clj"]
              :resource-paths ["env/prod/resources"]
-             :jvm-opts [~(str "-Djava.library.path=/stava")]}
+             :jvm-opts [~(str "-Djava.library.path=" (System/getenv "HOME") "/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64")]}
 
    :dev           [:project/dev :profiles/dev]
    :local         [:project/local :profiles/local]
