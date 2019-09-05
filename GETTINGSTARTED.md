@@ -1,42 +1,42 @@
 DOCUMENT IS WORK IN PROGRESS!
 
-RÖD MARKERING = Info saknas
 
 # Getting started with JobTech Taxonomy API
 
 Hello developer! This document will get you started using the API at http://jobtech-taxonomy-api.dev.services.jtech.se/v0/taxonomy/swagger-ui/index.html 
 . The tools we provide gives you access to the Taxonomy Database containing terminology used in the Swedish labour market and the relationships between concepts within taxonomies like occupations, skills, education levels and much more!
 
-The public API is open source (code found at https://github.com/JobtechSwe/jobtech-taxonomy-api) and the data is free to use by anyone. Make sure to read through the documentation for the specific resource, and the information about the Taxonomy Database, to understand what this API can offer. If you have any questions about the API or the data, don’t hesitate to contact us at contact@jobtechdev.se, or create an issue on Github if you find any bugs.
+The public API is open source (code found at https://github.com/JobtechSwe/jobtech-taxonomy-api) and the data is free to use by anyone. Make sure to read through the documentation for the specific resource you want, and the information about the Taxonomy Database, to understand what this API can offer. If you have any questions about the API or the data, don’t hesitate to contact us at contact@jobtechdev.se, or create an issue on Github if you find any bugs.
 
+# Table of content
 * [ Getting started - Short version ](#short)
 * [ Getting started - Longer version ](#long)
-> * [ Background - The Taxonomy Database ](#background)
-> > * [ Schema: Occupations ](#occupations)
-> > * [ Schema: Skills ](#skills)
-> > * [ Schema: Geographical places ](#geography)
-> > * [ Schema: Wage type ](#wageType)
-> > * [ Schema: Employment type ](#eType)
-> > * [ Schema: Driving licence ](#driving)
-> > * [ Schema: Worktime extent ](#worktime)
-> > * [ Schema: SNI ](#sni)
-> > * [ Schema: Languages ](#language)
-> > * [ Schema: Language levels ](#languageLevel)
-> > * [ Schema: Employment duration ](#employmentDuration)
-> * [ Using the API ](#using)
-> > * [ Authentication ](#auth)
-> * [ Resources ](#resources)
-> > * [ Endpoint: /v0/taxonomy/public/versions ](#versions)
-> > * [ Endpoint: /v0/taxonomy/public/changes ](#changes)
-> > * [ Endpoint: /v0/taxonomy/public/concepts ](#concepts)
-> > * [ Endpoint: /v0/taxonomy/public/search ](#search)
-> > * [ Endpoint: /v0/taxonomy/public/replaced-by-changes ](#replaced)
-> > * [ Endpoint: /v0/taxonomy/public/concept/types ](#types)
-> > * [ Endpoint: /v0/taxonomy/public/parse-text ](#parse)
-> * [ Results ](#results)
-> > * [ Successful queries ](#success)
-> > * [ Errors ](#error)
-> * [ Use cases ](#useCases)
+  * [ Background - The Taxonomy Database ](#background)
+    * [ Schema: Occupations ](#occupations)
+    * [ Schema: Skills ](#skills)
+    * [ Schema: Geographical places ](#geography)
+    * [ Schema: Wage type ](#wageType)
+    * [ Schema: Employment type ](#eType)
+    * [ Schema: Driving licence ](#driving)
+    * [ Schema: Worktime extent ](#worktime)
+    * [ Schema: SNI ](#sni)
+    * [ Schema: Languages ](#language)
+    * [ Schema: Language levels ](#languageLevel)
+    * [ Schema: Employment duration ](#employmentDuration)
+  * [ Using the API ](#using)
+    * [ Authentication ](#auth)
+* [ Resources ](#resources)
+    * [ Endpoint: /v0/taxonomy/public/versions ](#versions)
+    * [ Endpoint: /v0/taxonomy/public/changes ](#changes)
+    * [ Endpoint: /v0/taxonomy/public/concepts ](#concepts)
+    * [ Endpoint: /v0/taxonomy/public/search ](#search)
+    * [ Endpoint: /v0/taxonomy/public/replaced-by-changes ](#replaced)
+    * [ Endpoint: /v0/taxonomy/public/concept/types ](#types)
+    * [ Endpoint: /v0/taxonomy/public/parse-text ](#parse)
+  * [ Results ](#results)
+    * [ Successful queries ](#success)
+    * [ Errors ](#error)
+  * [ Use cases ](#useCases)
 * [ Contact Information ](#contact)
 
 <a name="short"></a>
@@ -56,9 +56,15 @@ The content of the Taxonomy Database is constantly improved and updated behind t
 
 The Taxonomy Database contains a number of schemas. Some of these schemas are multilevel taxonomies with hierarchical relationships between concepts. Some schemas are merely simple collections of concepts. The following section will walk you through all the different schemas.
 
-
 <a name="occupations"></a>
 ### Schema: Occupations
+
+
+```
+Chart created in www.draw.io
+```
+
+![alt text](https://github.com/JobtechSwe/jobtech-taxonomy-api/blob/develop/pictures-for-md/Untitled%20Diagram.png "Diagram for Occupation Schema")
 
 The occupation taxonomy is a multilevel collection of occupations. The taxonomy is based on different external standards together with content created by the editorial team for use in the Swedish labour market, with the concepts all connected to each other directly or indirectly. Depending on your needs you might be interested in different parts of the schema. If you work with job seekers or employers the recommended types to use is the Occupation Field type together with SSYK-4 and Occupation Names. The Occupation collections and Keywords might also be useful. If you are working with official labour market statistics you are more likely to use the SSYK or ISCO types.
 
@@ -69,6 +75,12 @@ The external standard types at the topmost level in the schema (SSYK-1 and ISCO-
 The lower you get in the taxonomy, the more detailed concepts you’ll find with Occupation Name at the bottom. This type contains more than 3000 concepts, collected by the editorial team often by suggestions from employers and industry organizations. In this level you’ll find concepts like “Stödpedagog”. 
 
 Every concept at a lower and more detailed level is connected to one concept at the parent level, throughout the taxonomy. Example: 
+
+```
+Chart created in www.draw.io
+```
+
+![alt text](https://github.com/JobtechSwe/jobtech-taxonomy-api/blob/develop/pictures-for-md/Hierarchy.png "Diagram linked occupation levels")
 
 In the type Occupation Collections you’ll find listings of Occupation Names grouped by different variables that may span over different occupation areas. examples are “Arbeten utan krav på utbildning” and “Chefsyrken”.
 The Keyword type contains a variety of different search terms and phrases in some way related to Occupation Names. They can be used to help candidates find job ads they are interested in even if they don’t know the exact Occupation Name. An example is the Keyword “Coop” (like the food store), mapped to the Occupation Name “Butiksbiträde”. 
@@ -91,12 +103,12 @@ The third type is simply called regions and it contains all regions within the E
 
 The fourth level in the geographic places taxonomy contains the Swedish municipalities. Each municipality is mapped to a specific parent region in the above level.
 
-<a name="">wageType</a>
+<a name="wageType"></a>
 ### Schema: Wage type
 
 This schema only has one type. This type contains descriptions of different forms of payment, like “Rörlig ackords- eller provisionslön”.
 
-<a name="">eType</a>
+<a name="eType"></a>
 ### Schema: Employment type
 
 This schema only contain one type. It lists different types of employment, like “Sommarjobb / feriejobb” och “Behovsanställning”.
@@ -128,12 +140,12 @@ The second level, SNI-level-2, lists the industries in more detail. It has conce
 
 The language taxonomy lists more than 400 natural languages in the world, like “Svenska” and “Xhosa/Isixhosa”. The language names follows the ISO standard.
 
-<a name="">languageLevel</a>
+<a name="languageLevel"></a>
 ### Schema: Language levels
 
 The language level taxonomy is a simple collection of different terms used to describe language proficiency. It contains concepts like “Lite” and “Flytande”.
 
-<a name="">employmentDuration</a>
+<a name="employmentDuration"></a>
 ### Schema: Employment duration
 
 The employment duration taxonomy contains concepts describing how long an employment is meant to last. The schema contains concepts like “3 månader – upp till 6 månader”.
