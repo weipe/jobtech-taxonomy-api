@@ -47,16 +47,6 @@
     (log/info component "started"))
   (.addShutdownHook (Runtime/getRuntime) (Thread. stop-app)))
 
-(defn -main [& args]
-  (interim-db-setup)
-  (start-app args))
-
-(comment
-
-  (start-app)
-
-  )
-
 (defn interim-db-setup []
     (def schema
     [{:db/ident       :concept/id
@@ -240,3 +230,13 @@
   (d/transact (jobtech-taxonomy-api.db.database-connection/get-conn) {:tx-data [{:taxonomy-version/id 66}]})
 
   (def api-key "2f904e245c1f5"))
+
+(defn -main [& args]
+  (interim-db-setup)
+  (start-app args))
+
+(comment
+
+  (start-app)
+
+  )
