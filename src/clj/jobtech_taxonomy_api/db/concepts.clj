@@ -105,7 +105,7 @@
    )
   )
 
-"TODO expose this as a private end point for the editor"
+;;"TODO expose this as a private end point for the editor"
 (defn find-concepts-including-unpublished
   ([id preferred-label type deprecated offset limit]
    (find-concepts-by-db id preferred-label type deprecated offset limit (get-db))

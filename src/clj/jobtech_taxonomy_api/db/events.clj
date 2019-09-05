@@ -241,7 +241,7 @@ Like replaced-by will return nil."
   (convert-events-transaction-ids-to-version-ids
    (sort-by :transaction-id
             (convert-history-to-events
-             (d/q show-concept-history-since-version-query (get-db-hist db) (dec from-version) to-version))))
+             (d/q show-concept-history-since-version-query (get-db-hist db)  from-version to-version))))
   )
 
 

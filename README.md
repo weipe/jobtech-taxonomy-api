@@ -236,6 +236,17 @@ Create the file "dev-config.edn" with this content
 }
 ```
 
+## Running the tests in Docker
+
+Sometimes it can be handy to be able to quickly checkout a branch from git and run all tests in a clean Docker environment.
+
+Build the Docker image (the branch is configured at the top of the script):
+   bin/test-docker.sh build
+
+Run the tests (this requires that you have previously setup aws authentication: `~/.aws/accessKeys.csv`):
+   bin/test-docker.sh
+
+
 ## COMMON ERRORS
 
 If you get :server-type must be :cloud, :peer-server, or :local
