@@ -22,7 +22,7 @@ RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev &&\
         cd .. &&\
         #rm -rf jobtech-nlp-stava &&\
         #
-        echo "DEBUGSTART" >&2 && find / | grep "libstava.so" &&\
+        mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 && cp -r /jobtech-nlp-stava/resources/libstava.so /jobtech-nlp-stava/resources/lib /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
         lein uberjar
 
 
