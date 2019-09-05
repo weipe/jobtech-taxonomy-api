@@ -8,8 +8,9 @@ ARG USER=docker
 ARG UID=1000
 ARG GID=1000
 ARG PW=docker
-RUN useradd -m ${USER} --uid=${UID} && echo "${USER}:${PW}" | \
-      chpasswd
+#RUN useradd -m ${USER} --uid=${UID} && echo "${USER}:${PW}" | chpasswd
+RUN addgroup -g ${GID} ${USER} && adduser -S ${USER} -G ${USER}
+
 USER ${UID}:${GID}
 WORKDIR /home/${USER}
 
@@ -42,8 +43,7 @@ ARG USER=docker
 ARG UID=1000
 ARG GID=1000
 ARG PW=docker
-RUN useradd -m ${USER} --uid=${UID} && echo "${USER}:${PW}" | \
-      chpasswd
+RUN addgroup -g ${GID} ${USER} && adduser -S ${USER} -G ${USER}
 USER ${UID}:${GID}
 WORKDIR /home/${USER}
 
