@@ -20,7 +20,7 @@ RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev &&\
         lein build-lib &&\
         lein install &&\
         cd .. &&\
-        rm -rf jobtech-nlp-stava &&\
+        #rm -rf jobtech-nlp-stava &&\
         #
         echo "DEBUGSTART" >&2 && find / | grep "libstava.so" &&\
         lein uberjar
