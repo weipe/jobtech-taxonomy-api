@@ -12,7 +12,7 @@ ARG PW=docker
 RUN addgroup -g ${GID} ${USER} && adduser -S ${USER} -G ${USER}
 
 
-RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev sudo &&
+RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev sudo &&\
         wget -O /usr/local/bin/lein https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein &&\
         chmod a+rx /usr/local/bin/lein &&\
         mkdir -p /home/${USER} &&\
