@@ -20,7 +20,8 @@ RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev sudo &&\
 
 #WORKDIR /
 #USER root
-USER ${UID}:${GID}
+USER ${USER}
+#        :${GID}
 WORKDIR /home/${USER}
 
         # Build native library
