@@ -38,7 +38,7 @@ RUN     export HOME=/home/${USER} &&\
         lein uberjar &&\
         #cd .. &&\
         #rm -rf jobtech-nlp-stava &&\
-        echo "DEBUG------------" >&2 && find / -name libstava.so && find / -name jobtech-taxonomy-api.jar
+        #echo "DEBUG------------" >&2 && find / -name libstava.so && find / -name jobtech-taxonomy-api.jar
 
 
 
@@ -49,14 +49,16 @@ ARG UID=1000
 ARG GID=1000
 ARG PW=docker
 RUN addgroup -g ${GID} ${USER} && adduser -S ${USER} -G ${USER}
-USER ${UID}:${GID}
+USER ${USER}
+#        :${GID}
 WORKDIR /home/${USER}
 
 
-COPY --from=builder /home/docker/jobtech-nlp-stava/target/uberjar/jobtech-taxonomy-api.jar /jobtech-taxonomy-api/app.jar
+## OR /home/docker/jobtech-nlp-stava/target/jobtech-nlp-stava-0.1.0-standalone.jar
+COPY --from=builder /home/docker/jobtech-nlp-stava/target/jobtech-nlp-stava-0.1.0.jar /jobtech-taxonomy-api/app.jar
 
 #COPY --from=builder /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64
-COPY --from=builder /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 /stava
+COPY --from=builder /home/docker/jobtech-nlp-stava/resources /stava
 
 EXPOSE 3000
 
