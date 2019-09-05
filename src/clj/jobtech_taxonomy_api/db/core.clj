@@ -1,6 +1,6 @@
 (ns jobtech-taxonomy-api.db.core
   (:require
-   [datomic.client.api :as d]
+   [datahike.api :as d]
    [schema.core :as s]
    [clojure.test :refer [is]]
    [clj-time.coerce :as c]
@@ -104,8 +104,8 @@
 
 
 (defn replace-deprecated-concept [old-concept-id new-concept-id]
-  (let [data {:concept/id old-concept-id
-              :concept/replaced-by [{:concept/id new-concept-id}]}
+  (let [data {:db/id               [:concept/id old-concept-id]
+              :concept/replaced-by [:concept/id new-concept-id]}
         result (d/transact (get-conn) {:tx-data [data]})
         timestamp (nth (first (:tx-data result)) 2)]
 

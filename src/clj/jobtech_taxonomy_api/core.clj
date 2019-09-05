@@ -46,3 +46,9 @@
 
 (defn -main [& args]
   (start-app args))
+
+(comment
+
+  (start-app)
+
+  )

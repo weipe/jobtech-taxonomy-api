@@ -8,8 +8,7 @@
                  [cheshire "5.8.1"]
                  [clojure.java-time "0.3.2"]
                  [org.clojure/data.json "0.2.6"]
-                 [com.datomic/client-cloud "0.8.71"] ; for env/dev/
-                 [com.datomic/client-pro "0.8.28"]  ; for env/local/
+                 [io.replikativ/datahike "0.2.0-SNAPSHOT"]
                  [clj-time "0.15.0"]
                  [com.google.guava/guava "25.1-jre"]
                  [compojure "1.6.1"]

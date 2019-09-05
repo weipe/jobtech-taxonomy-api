@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [type])
   (:require
    [schema.core :as s]
-   [datomic.client.api :as d]
+   [datahike.api :as d]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
    [jobtech-taxonomy-api.db.api-util :refer :all]
    [clojure.set :as set]

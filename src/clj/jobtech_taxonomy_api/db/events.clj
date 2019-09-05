@@ -1,7 +1,7 @@
 (ns jobtech-taxonomy-api.db.events
   (:refer-clojure :exclude [type])
   (:require
-   [datomic.client.api :as d]
+   [datahike.api :as d]
    [schema.core :as s]
    [jobtech-taxonomy-api.db.api-util :as u]
    [jobtech-taxonomy-api.db.database-connection :refer :all]
@@ -16,8 +16,7 @@
     [?e :concept/id ?concept-id]
     [?e :concept/preferred-label ?preferred-label]
     [?e :concept/type ?type]
-    [?e ?a ?v ?tx ?added]
-    [?a :db/ident ?aname]
+    [?e ?aname ?v ?tx ?added]
     [?tx :db/txInstant ?inst]])
 
 (def show-concept-history-since-query
@@ -29,10 +28,9 @@
     [?e :concept/id ?concept-id]
     [?e :concept/type ?type]
     [(get-else $ ?e :concept/deprecated false) ?deprecated]
-    [?e ?a ?v ?tx ?added]
+    [?e ?aname ?v ?tx ?added]
     [?tx :db/txInstant ?inst]
     [(< ?since ?inst)]
-    [?a :db/ident ?aname]
     ]
   )
 
@@ -45,7 +43,7 @@
     [?e :concept/id ?concept-id]
     [?e :concept/type ?type]
     [(get-else $ ?e :concept/deprecated false) ?deprecated]
-    [?e ?a ?v ?tx ?added]
+    [?e ?aname ?v ?tx ?added]
     [?tx :db/txInstant ?inst]
     [?fv :taxonomy-version/id ?one-version-before-from-version ?one-version-before-from-version-tx]
     [?one-version-before-from-version-tx :db/txInstant ?one-version-before-from-version-inst]
@@ -53,7 +51,6 @@
     [?tv :taxonomy-version/id ?to-version ?to-version-tx]
     [?to-version-tx :db/txInstant ?to-version-inst]
     [(> ?to-version-inst ?inst)]
-    [?a :db/ident ?aname]
     ]
   )
 
@@ -97,7 +94,6 @@
     [?a :db/ident ?aname]
     ]
   )
-
 
 (defn get-db-hist [db] (d/history db))
 

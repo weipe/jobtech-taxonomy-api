@@ -1,22 +1,29 @@
 (ns jobtech-taxonomy-api.db.database-connection
   (:require
-   [datomic.client.api :as d]
-   ;;[datomic.api :as da]
-   [mount.core :refer [defstate]]
+    [datahike.api :as d]
+    [mount.core :refer [defstate]]
    [jobtech-taxonomy-api.config :refer [env]]
    ))
 
 
-(defn get-client [] (d/client (:datomic-cfg env)))
+(def uri "datahike:mem://jobtech-v13")
 
-(defstate ^{:on-reload :noop} conn
+(defn get-client []
+  uri
+  #_(d/client (:datomic-cfg env)))
+
+#_(defstate ^{:on-reload :noop} conn
   :start (do (println (str "start:conn " (:datomic-name env))) (d/connect (get-client)  {:db-name (:datomic-name env)}))
   ;;:stop (da/release (get-conn))
   )
 
-(defn get-conn []
-  (d/connect (get-client)  {:db-name (:datomic-name env)}))
+(defstate ^{:on-reload :noop} conn
+          :start (do (println (str "start:conn " uri)) (d/connect (get-client)))
+          ;;:stop (da/release (get-conn))
+          )
 
+(defn get-conn []
+  (d/connect (get-client)))
 
 (def get-database-instance-from-version-query
   '[:find ?txid
@@ -51,10 +58,7 @@
   ([version]
    (if version
      (d/as-of (d/db (get-conn)) (get-transaction-id-from-version version))
-     (d/as-of (d/db (get-conn)) (get-latest-released-database-transaction-id))
-     )
-   )
-  )
+     (d/as-of (d/db (get-conn)) (get-latest-released-database-transaction-id)))))
 
-(defn get-conn "" []
+#_(defn get-conn "" []
   (d/connect (get-client)  {:db-name (:datomic-name env)}))
