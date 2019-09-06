@@ -28,7 +28,7 @@ USER ${USER}
         # TODO: add tag to checkout, to make sure a proper, correct release is used
 RUN     export HOME=/home/${USER} &&\
         ###cd /home/${USER} &&\
-        echo "DEBUG0------------" >&2 && pwd &&\
+        echo "DEBUG0------------" >&2 && ls -l && mv jobtech-taxonomy-api /home/${USER}/ && chown -R docker:docker /home/${USER}/jobtech-taxonomy-api &&\
         git clone https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
         cd jobtech-nlp-stava &&\
         lein deps &&\
