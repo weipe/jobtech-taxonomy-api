@@ -35,7 +35,9 @@ RUN     export HOME=/home/${USER} &&\
         lein install &&\
         #
         #mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 && cp -r /jobtech-nlp-stava/resources/libstava.so /jobtech-nlp-stava/resources/lib /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
-        lein uberjar
+        lein uberjar &&\
+        echo "DEBUG1------------" >&2 && ls -l /home/docker/jobtech-nlp-stava/resources &&\
+        echo "DEBUG1------------" >&2 && find /home/docker -name '*.jar'
         #cd .. &&\
         #rm -rf jobtech-nlp-stava &&\
         #echo "DEBUG------------" >&2 && find / -name libstava.so && find / -name jobtech-taxonomy-api.jar
