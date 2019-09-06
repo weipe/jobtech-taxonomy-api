@@ -40,6 +40,7 @@ EXPOSE 3000
 RUN chgrp -R 0 /jobtech-taxonomy-api /stava && \
     chmod -R g=u /jobtech-taxonomy-api /stava &&\
     mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0 &&\
+    ln -s /stava /.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
     ln -s /stava /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64
 
 CMD ["java", "-Dstava.library.path=/stava/lib/", "-Djava.library.path=/stava", "-jar", "/jobtech-taxonomy-api/app.jar"]
