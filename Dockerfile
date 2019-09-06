@@ -28,7 +28,7 @@ RUN     git clone https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
         cd jobtech-nlp-stava &&\
         lein deps &&\
         lein build-lib &&\
-        chmod -R a+r ../jobtech-nlp-stava &&\
+        chown -R ${USER}:${USER} ../jobtech-nlp-stava &&\
         mkdir -p /home/${USER} && chown -R ${USER}:${USER} /home/${USER} &&\
         sudo -u ${USER} env HOME=/home/${USER} lein install &&\
         cd .. &&\
