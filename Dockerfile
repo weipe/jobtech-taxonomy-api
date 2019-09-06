@@ -41,21 +41,21 @@ RUN     git clone https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
 
 FROM openjdk:8-alpine
 
-ARG USER=docker
-ARG UID=1000
-ARG GID=1000
-ARG PW=docker
-RUN addgroup -g ${GID} ${USER} && adduser -S ${USER} -G ${USER}
-USER ${USER}
-#        :${GID}
-WORKDIR /home/${USER}
+# ARG USER=docker
+# ARG UID=1000
+# ARG GID=1000
+# ARG PW=docker
+# RUN addgroup -g ${GID} ${USER} && adduser -S ${USER} -G ${USER}
+# USER ${USER}
+# #        :${GID}
+# WORKDIR /home/${USER}
 
-
+COPY --from=builder /target/uberjar/jobtech-taxonomy-api.jar /jobtech-taxonomy-api/app.jar
 ## OR /home/docker/jobtech-nlp-stava/target/jobtech-nlp-stava-0.1.0-standalone.jar
-COPY --from=builder /home/docker/jobtech-nlp-stava/target/jobtech-nlp-stava-0.1.0.jar /jobtech-taxonomy-api/app.jar
+#COPY --from=builder /jobtech-nlp-stava/target/jobtech-nlp-stava-0.1.0.jar /jobtech-taxonomy-api/app.jar
 
 #COPY --from=builder /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64
-COPY --from=builder /home/docker/jobtech-nlp-stava/resources /stava
+COPY --from=builder /jobtech-nlp-stava/resources /stava
 
 EXPOSE 3000
 
