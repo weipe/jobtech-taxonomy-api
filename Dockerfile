@@ -37,7 +37,8 @@ COPY --from=builder /jobtech-nlp-stava/resources /stava
 EXPOSE 3000
 
 ## stupid
-RUN mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0 &&\
+RUN chmod -R a+rwx /jobtech-taxonomy-api /stava &&\
+    mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0 &&\
     ln -s /stava /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64
 
 CMD ["java", "-Dstava.library.path=/stava/lib/", "-Djava.library.path=/stava", "-jar", "/jobtech-taxonomy-api/app.jar"]
