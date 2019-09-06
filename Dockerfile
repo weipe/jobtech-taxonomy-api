@@ -20,15 +20,15 @@ RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev sudo &&\
 
 #WORKDIR /
 #USER root
-USER ${USER}
+#USER ${USER}
 #        :${GID}
 ###WORKDIR /home/${USER}
 
         # Build native library
         # TODO: add tag to checkout, to make sure a proper, correct release is used
-RUN     export HOME=/home/${USER} &&\
+RUN     #export HOME=/home/${USER} &&\
+        export HOME=/root &&\
         ###cd /home/${USER} &&\
-        echo "DEBUG0------------" >&2 && ls -l && mv jobtech-taxonomy-api /home/${USER}/ && chown -R docker:docker /home/${USER}/jobtech-taxonomy-api &&\
         git clone https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
         cd jobtech-nlp-stava &&\
         lein deps &&\
@@ -38,8 +38,8 @@ RUN     export HOME=/home/${USER} &&\
         #
         #mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 && cp -r /jobtech-nlp-stava/resources/libstava.so /jobtech-nlp-stava/resources/lib /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
         lein uberjar &&\
-        echo "DEBUG1------------" >&2 && ls -l /home/docker/jobtech-nlp-stava/resources &&\
-        echo "DEBUG1------------" >&2 && find /home/docker -name '*.jar'
+        echo "DEBUG1------------" >&2 && ls -l /root/jobtech-nlp-stava/resources &&\
+        echo "DEBUG2------------" >&2 && find /root -name uberjar
         #cd .. &&\
         #rm -rf jobtech-nlp-stava &&\
         #echo "DEBUG------------" >&2 && find / -name libstava.so && find / -name jobtech-taxonomy-api.jar
