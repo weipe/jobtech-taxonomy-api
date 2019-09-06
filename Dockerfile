@@ -59,5 +59,7 @@ COPY --from=builder /jobtech-nlp-stava/resources /stava
 
 EXPOSE 3000
 
+RUN echo "JOAKIMDEBUG" >&2 && ls -l /jobtech-taxonomy-api /stava
+
 #CMD ["java", "-Dstava.library.path=/stava/lib/", "-Djava.library.path=/root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64", "-jar", "-jar", "/jobtech-taxonomy-api/app.jar"]
 CMD ["java", "-Dstava.library.path=/stava/lib/", "-Djava.library.path=/stava", "-jar", "/jobtech-taxonomy-api/app.jar"]
