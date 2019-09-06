@@ -22,17 +22,19 @@ RUN apk update && apk add swig openjdk8 gcc wget git bash make libc-dev sudo &&\
 #USER root
 USER ${USER}
 #        :${GID}
-WORKDIR /home/${USER}
+###WORKDIR /home/${USER}
 
         # Build native library
         # TODO: add tag to checkout, to make sure a proper, correct release is used
 RUN     export HOME=/home/${USER} &&\
-        cd /home/${USER} &&\
+        ###cd /home/${USER} &&\
+        echo "DEBUG0------------" >&2 && pwd &&\
         git clone https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
         cd jobtech-nlp-stava &&\
         lein deps &&\
         lein build-lib &&\
         lein install &&\
+        cd .. &&\
         #
         #mkdir -p /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 && cp -r /jobtech-nlp-stava/resources/libstava.so /jobtech-nlp-stava/resources/lib /root/.clj-nativedep/jobtech-nlp-stava/0.1.0/linux-amd64 &&\
         lein uberjar &&\
