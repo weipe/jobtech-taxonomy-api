@@ -32,6 +32,7 @@ RUN     git clone https://github.com/JobtechSwe/jobtech-nlp-stava.git &&\
         mkdir -p /home/${USER} && chown -R ${USER}:${USER} /home/${USER} &&\
         sudo -u ${USER} env HOME=/home/${USER} lein install &&\
         cd .. &&\
+        echo "DEBUG0------------" >&2 && find / -name libstava.so &&\
         env HOME=/home/${USER} lein uberjar &&\
         echo "DEBUG1------------" >&2 && ls -l /jobtech-nlp-stava/resources &&\
         echo "DEBUG2------------" >&2 && find / -name uberjar &&\
